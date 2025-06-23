@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,9 +96,11 @@ const Dashboard = () => {
                   Gestionează Bugetele
                 </Link>
               </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Target className="mr-2 h-4 w-4" />
-                Creează Obiectiv
+              <Button asChild className="w-full justify-start" variant="outline">
+                <Link to="/goals">
+                  <Target className="mr-2 h-4 w-4" />
+                  Vezi Obiectivele
+                </Link>
               </Button>
               <Button asChild className="w-full justify-start" variant="outline">
                 <Link to="/reports">

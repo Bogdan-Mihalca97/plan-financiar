@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
 import Reports from "./pages/Reports";
+import Goals from "./pages/Goals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const AppRoutes = () => (
     <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
     <Route path="/budgets" element={<ProtectedRoute><Budgets /></ProtectedRoute>} />
     <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+    <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
