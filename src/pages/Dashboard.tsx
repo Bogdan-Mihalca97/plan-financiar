@@ -101,9 +101,11 @@ const Dashboard = () => {
                 <Target className="mr-2 h-4 w-4" />
                 Creează Obiectiv
               </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Vezi Rapoarte
+              <Button asChild className="w-full justify-start" variant="outline">
+                <Link to="/reports">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Vezi Rapoarte
+                </Link>
               </Button>
             </CardContent>
           </Card>
