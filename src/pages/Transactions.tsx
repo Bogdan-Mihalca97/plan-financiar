@@ -1,16 +1,19 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PiggyBank, Plus, Search, Filter } from "lucide-react";
+import { PiggyBank, Plus, Search, Filter, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import AddTransactionForm from "@/components/transactions/AddTransactionForm";
+import ImportCSVForm from "@/components/transactions/ImportCSVForm";
 import TransactionsList from "@/components/transactions/TransactionsList";
 
 const Transactions = () => {
   const { user, logout } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showImportForm, setShowImportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   return (
@@ -60,10 +63,16 @@ const Transactions = () => {
             <h2 className="text-3xl font-bold text-gray-900">Tranzacții</h2>
             <p className="text-gray-600">Gestionează toate tranzacțiile tale</p>
           </div>
-          <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Adaugă Tranzacție
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={() => setShowImportForm(true)} variant="outline" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Import CSV
+            </Button>
+            <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Adaugă Tranzacție
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Search */}
@@ -99,6 +108,12 @@ const Transactions = () => {
         <AddTransactionForm 
           isOpen={showAddForm} 
           onClose={() => setShowAddForm(false)} 
+        />
+
+        {/* Import CSV Modal */}
+        <ImportCSVForm 
+          isOpen={showImportForm} 
+          onClose={() => setShowImportForm(false)} 
         />
       </main>
     </div>
