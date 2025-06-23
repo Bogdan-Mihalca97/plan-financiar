@@ -2,13 +2,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PiggyBank, TrendingUp, PieChart, BarChart3, Calendar, Download } from "lucide-react";
+import { PiggyBank, TrendingUp, PieChart, BarChart3, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import ExpenseChart from "@/components/reports/ExpenseChart";
-import BudgetChart from "@/components/reports/BudgetChart";
-import TrendChart from "@/components/reports/TrendChart";
-import CategoryBreakdown from "@/components/reports/CategoryBreakdown";
 
 const Reports = () => {
   const { user, logout } = useAuth();
@@ -47,7 +43,7 @@ const Reports = () => {
           </Button>
         </div>
 
-        {/* Overview Cards */}
+        {/* Overview Cards - Empty State */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -55,8 +51,8 @@ const Reports = () => {
               <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">5.200 Lei</div>
-              <p className="text-xs text-muted-foreground">+5.2% față de luna trecută</p>
+              <div className="text-2xl font-bold text-green-600">0 Lei</div>
+              <p className="text-xs text-muted-foreground">Nu ai venituri înregistrate</p>
             </CardContent>
           </Card>
 
@@ -66,8 +62,8 @@ const Reports = () => {
               <TrendingUp className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">3.420 Lei</div>
-              <p className="text-xs text-muted-foreground">-1.2% față de luna trecută</p>
+              <div className="text-2xl font-bold text-red-600">0 Lei</div>
+              <p className="text-xs text-muted-foreground">Nu ai cheltuieli înregistrate</p>
             </CardContent>
           </Card>
 
@@ -77,8 +73,8 @@ const Reports = () => {
               <PiggyBank className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">1.780 Lei</div>
-              <p className="text-xs text-muted-foreground">34.2% din venituri</p>
+              <div className="text-2xl font-bold text-blue-600">0 Lei</div>
+              <p className="text-xs text-muted-foreground">0% din venituri</p>
             </CardContent>
           </Card>
 
@@ -88,87 +84,32 @@ const Reports = () => {
               <BarChart3 className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">34.2%</div>
+              <div className="text-2xl font-bold text-purple-600">0%</div>
               <p className="text-xs text-muted-foreground">Obiectiv: 30%</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Charts Section */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Rezumat</TabsTrigger>
-            <TabsTrigger value="expenses">Cheltuieli</TabsTrigger>
-            <TabsTrigger value="budgets">Bugete</TabsTrigger>
-            <TabsTrigger value="trends">Tendințe</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="h-5 w-5" />
-                    Breakdown Categorii
-                  </CardTitle>
-                  <CardDescription>Distribuția cheltuielilor pe categorii</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CategoryBreakdown />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Venituri vs Cheltuieli
-                  </CardTitle>
-                  <CardDescription>Comparație lunară ultimele 6 luni</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ExpenseChart />
-                </CardContent>
-              </Card>
+        {/* Empty State for Reports */}
+        <Card>
+          <CardContent className="text-center py-12">
+            <div className="mb-4">
+              <BarChart3 className="mx-auto h-16 w-16 text-gray-400" />
             </div>
-          </TabsContent>
-
-          <TabsContent value="expenses" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analiza Cheltuielilor</CardTitle>
-                <CardDescription>Evoluția cheltuielilor pe categorii</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExpenseChart />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="budgets" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Performanța Bugetelor</CardTitle>
-                <CardDescription>Progresul bugetelor față de țintele stabilite</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BudgetChart />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="trends" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tendințe Financiare</CardTitle>
-                <CardDescription>Evoluția economiilor și cheltuielilor în timp</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TrendChart />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nu ai date pentru rapoarte</h3>
+            <p className="text-gray-500 mb-6">
+              Pentru a vedea rapoarte și grafice, mai întâi adaugă tranzacții, bugete și obiective.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button asChild>
+                <Link to="/transactions">Adaugă Tranzacții</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/budgets">Creează Bugete</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
