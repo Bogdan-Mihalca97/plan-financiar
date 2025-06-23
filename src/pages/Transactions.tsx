@@ -1,46 +1,25 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PiggyBank, Plus, Search, Filter, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTransactions } from "@/contexts/TransactionsContext";
 import { Link } from "react-router-dom";
 import AddTransactionForm from "@/components/transactions/AddTransactionForm";
 import ImportCSVForm from "@/components/transactions/ImportCSVForm";
 import TransactionsList from "@/components/transactions/TransactionsList";
 
-export interface Transaction {
-  id: string;
-  date: string;
-  description: string;
-  amount: number;
-  type: "income" | "expense";
-  category: string;
-}
-
 const Transactions = () => {
   const { user, logout } = useAuth();
+  const { transactions, addTransactions } = useTransactions();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showImportForm, setShowImportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Load transactions from localStorage on component mount
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const savedTransactions = localStorage.getItem('transactions');
-    return savedTransactions ? JSON.parse(savedTransactions) : [];
-  });
 
-  // Save transactions to localStorage whenever transactions change
-  useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [transactions]);
-
-  const handleTransactionsImported = (importedTransactions: Omit<Transaction, 'id'>[]) => {
-    const newTransactions = importedTransactions.map(transaction => ({
-      ...transaction,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-    }));
-    setTransactions(prev => [...prev, ...newTransactions]);
+  const handleTransactionsImported = (importedTransactions: Omit<import("@/contexts/TransactionsContext").Transaction, 'id'>[]) => {
+    addTransactions(importedTransactions);
   };
 
   return (

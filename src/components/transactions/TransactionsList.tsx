@@ -1,10 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash, Edit } from "lucide-react";
-import type { Transaction } from "@/pages/Transactions";
+import type { Transaction } from "@/contexts/TransactionsContext";
 
 interface TransactionsListProps {
   searchTerm: string;
