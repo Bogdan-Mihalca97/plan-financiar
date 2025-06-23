@@ -1,20 +1,70 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PiggyBank, Plus, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import AddBudgetForm from "@/components/budgets/AddBudgetForm";
+import { useToast } from "@/hooks/use-toast";
+
+interface Budget {
+  id: string;
+  category: string;
+  limit_amount: number;
+  period: string;
+  created_at: string;
+}
 
 const Budgets = () => {
   const { userProfile, logout } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Start with empty budgets for new users
-  const mockBudgets: any[] = [];
+  const fetchBudgets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const totalBudget = 0;
-  const totalSpent = 0;
+      if (error) throw error;
+      setBudgets(data || []);
+    } catch (error: any) {
+      console.error('Error fetching budgets:', error);
+      toast({
+        title: "Eroare la încărcarea bugetelor",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBudgets();
+  }, []);
+
+  const totalBudget = budgets.reduce((sum, budget) => sum + budget.limit_amount, 0);
+
+  const handleBudgetAdded = () => {
+    fetchBudgets(); // Refresh the budgets list
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Se încarcă bugetele...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -77,8 +127,10 @@ const Budgets = () => {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0 Lei</div>
-              <p className="text-xs text-muted-foreground">Nu ai bugete încă</p>
+              <div className="text-2xl font-bold">{totalBudget.toFixed(2)} Lei</div>
+              <p className="text-xs text-muted-foreground">
+                {budgets.length} {budgets.length === 1 ? 'buget activ' : 'bugete active'}
+              </p>
             </CardContent>
           </Card>
 
@@ -99,32 +151,70 @@ const Budgets = () => {
               <PiggyBank className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0 Lei</div>
-              <p className="text-xs text-muted-foreground">Creează primul buget</p>
+              <div className="text-2xl font-bold">{totalBudget.toFixed(2)} Lei</div>
+              <p className="text-xs text-muted-foreground">Din bugetele tale</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Empty State */}
-        <Card>
-          <CardContent className="text-center py-12">
-            <div className="mb-4">
-              <Target className="mx-auto h-16 w-16 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nu ai încă bugete</h3>
-            <p className="text-gray-500 mb-6">
-              Începe prin a crea primul tău buget pentru a-ți gestiona cheltuielile pe categorii.
-            </p>
-            <Button onClick={() => setShowAddForm(true)} className="mx-auto">
-              Creează Primul Buget
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Budgets List or Empty State */}
+        {budgets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {budgets.map((budget) => (
+              <Card key={budget.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{budget.category}</span>
+                    <span className="text-sm font-normal text-gray-500">
+                      {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Limită:</span>
+                      <span className="font-semibold">{budget.limit_amount.toFixed(2)} Lei</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Cheltuit:</span>
+                      <span className="font-semibold">0 Lei</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }}></div>
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">
+                      0% din buget folosit
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="text-center py-12">
+              <div className="mb-4">
+                <Target className="mx-auto h-16 w-16 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nu ai încă bugete</h3>
+              <p className="text-gray-500 mb-6">
+                Începe prin a crea primul tău buget pentru a-ți gestiona cheltuielile pe categorii.
+              </p>
+              <Button onClick={() => setShowAddForm(true)} className="mx-auto">
+                Creează Primul Buget
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Add Budget Modal */}
         <AddBudgetForm 
           isOpen={showAddForm} 
-          onClose={() => setShowAddForm(false)} 
+          onClose={() => {
+            setShowAddForm(false);
+            handleBudgetAdded();
+          }} 
         />
       </main>
     </div>

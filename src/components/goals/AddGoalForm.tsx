@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Target } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddGoalFormProps {
   isOpen: boolean;
@@ -23,21 +26,68 @@ const AddGoalForm = ({ isOpen, onClose }: AddGoalFormProps) => {
     category: "",
     priority: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Obiectiv nou:", formData);
-    // Aici ar fi logica pentru salvarea obiectivului
-    onClose();
-    setFormData({
-      title: "",
-      description: "",
-      targetAmount: "",
-      currentAmount: "",
-      deadline: "",
-      category: "",
-      priority: ""
-    });
+    
+    if (!user) {
+      toast({
+        title: "Eroare",
+        description: "Trebuie să fii conectat pentru a crea un obiectiv",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .insert([
+          {
+            user_id: user.id,
+            title: formData.title,
+            description: formData.description || null,
+            target_amount: parseFloat(formData.targetAmount),
+            current_amount: parseFloat(formData.currentAmount) || 0,
+            deadline: formData.deadline,
+            category: formData.category || null,
+            priority: formData.priority || null
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Obiectiv Creat!",
+        description: `Obiectivul "${formData.title}" a fost creat cu succes.`,
+      });
+      
+      onClose();
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        targetAmount: "",
+        currentAmount: "",
+        deadline: "",
+        category: "",
+        priority: ""
+      });
+    } catch (error: any) {
+      console.error('Error creating goal:', error);
+      toast({
+        title: "Eroare la crearea obiectivului",
+        description: error.message || "A apărut o problemă la salvarea obiectivului",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -89,6 +139,8 @@ const AddGoalForm = ({ isOpen, onClose }: AddGoalFormProps) => {
               <Input
                 id="targetAmount"
                 type="number"
+                step="0.01"
+                min="0"
                 placeholder="10000"
                 value={formData.targetAmount}
                 onChange={(e) => handleInputChange("targetAmount", e.target.value)}
@@ -101,6 +153,8 @@ const AddGoalForm = ({ isOpen, onClose }: AddGoalFormProps) => {
               <Input
                 id="currentAmount"
                 type="number"
+                step="0.01"
+                min="0"
                 placeholder="0"
                 value={formData.currentAmount}
                 onChange={(e) => handleInputChange("currentAmount", e.target.value)}
@@ -158,8 +212,8 @@ const AddGoalForm = ({ isOpen, onClose }: AddGoalFormProps) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Anulează
             </Button>
-            <Button type="submit">
-              Creează Obiectivul
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Se creează..." : "Creează Obiectivul"}
             </Button>
           </DialogFooter>
         </form>

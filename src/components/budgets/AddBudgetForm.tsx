@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddBudgetFormProps {
   isOpen: boolean;
@@ -18,24 +20,56 @@ const AddBudgetForm = ({ isOpen, onClose }: AddBudgetFormProps) => {
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Eroare",
+        description: "Trebuie să fii conectat pentru a crea un buget",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simulăm salvarea bugetului
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .insert([
+          {
+            user_id: user.id,
+            category,
+            limit_amount: parseFloat(limit),
+            period
+          }
+        ]);
+
+      if (error) throw error;
+
       toast({
         title: "Buget Adăugat!",
         description: `Buget de ${limit} Lei pentru ${category} a fost creat.`,
       });
-      setIsLoading(false);
+      
       onClose();
       // Reset form
       setCategory("");
       setLimit("");
       setPeriod("monthly");
-    }, 1000);
+    } catch (error: any) {
+      console.error('Error creating budget:', error);
+      toast({
+        title: "Eroare la crearea bugetului",
+        description: error.message || "A apărut o problemă la salvarea bugetului",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const categories = [
@@ -84,6 +118,8 @@ const AddBudgetForm = ({ isOpen, onClose }: AddBudgetFormProps) => {
             <Input
               id="limit"
               type="number"
+              step="0.01"
+              min="0"
               placeholder="0.00"
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
