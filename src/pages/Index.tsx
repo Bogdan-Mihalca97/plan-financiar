@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ const Index = () => {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-2">
               <PiggyBank className="h-8 w-8 text-indigo-600" />
-              <h1 className="text-2xl font-bold text-gray-900">BugetInteligenţa</h1>
+              <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
             </div>
             <div className="space-x-4">
               <Button variant="outline" onClick={() => setShowLogin(true)}>

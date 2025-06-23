@@ -28,7 +28,7 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
       setIsLoading(false);
       toast({
         title: "Conectare Reușită!",
-        description: "Bun venit înapoi la BugetInteligenţa",
+        description: "Bun venit înapoi la BugetControl",
       });
       onClose();
     }, 1000);
@@ -40,7 +40,7 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
         <DialogHeader>
           <DialogTitle>Bun Venit Înapoi</DialogTitle>
           <DialogDescription>
-            Conectează-te la contul tău BugetInteligenţa
+            Conectează-te la contul tău BugetControl
           </DialogDescription>
         </DialogHeader>
         
