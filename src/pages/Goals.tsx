@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,10 +23,29 @@ const Goals = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <PiggyBank className="h-8 w-8 text-indigo-600" />
-              <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
-            </Link>
+            <div className="flex items-center space-x-8">
+              <Link to="/dashboard" className="flex items-center space-x-2">
+                <PiggyBank className="h-8 w-8 text-indigo-600" />
+                <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
+              </Link>
+              <nav className="hidden md:flex space-x-6">
+                <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 font-medium">
+                  Dashboard
+                </Link>
+                <Link to="/transactions" className="text-gray-700 hover:text-indigo-600 font-medium">
+                  Tranzacții
+                </Link>
+                <Link to="/budgets" className="text-gray-700 hover:text-indigo-600 font-medium">
+                  Bugete
+                </Link>
+                <Link to="/goals" className="text-indigo-600 font-medium">
+                  Obiective
+                </Link>
+                <Link to="/reports" className="text-gray-700 hover:text-indigo-600 font-medium">
+                  Rapoarte
+                </Link>
+              </nav>
+            </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Bună, {user?.firstName}!</span>
               <Button variant="outline" onClick={logout}>
