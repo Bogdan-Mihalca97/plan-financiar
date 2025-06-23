@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import AddBudgetForm from "@/components/budgets/AddBudgetForm";
 
 const Budgets = () => {
-  const { user, logout } = useAuth();
+  const { userProfile, logout } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Start with empty budgets for new users
@@ -46,7 +46,7 @@ const Budgets = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {user?.firstName}!</span>
+              <span className="text-gray-700">Bună, {userProfile?.first_name || 'Utilizator'}!</span>
               <Button variant="outline" onClick={logout}>
                 Deconectare
               </Button>

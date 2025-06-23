@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import ImportCSVForm from "@/components/transactions/ImportCSVForm";
 import TransactionsList from "@/components/transactions/TransactionsList";
 
 const Transactions = () => {
-  const { user, logout } = useAuth();
+  const { userProfile, logout } = useAuth();
   const { transactions, addTransactions } = useTransactions();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showImportForm, setShowImportForm] = useState(false);
@@ -52,7 +51,7 @@ const Transactions = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {user?.firstName}!</span>
+              <span className="text-gray-700">Bună, {userProfile?.first_name || 'Utilizator'}!</span>
               <Button variant="outline" onClick={logout}>
                 Deconectare
               </Button>

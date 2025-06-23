@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import AddGoalForm from "@/components/goals/AddGoalForm";
 
 const Goals = () => {
-  const { user, logout } = useAuth();
+  const { userProfile, logout } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Start with empty goals for new users
@@ -47,7 +47,7 @@ const Goals = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {user?.firstName}!</span>
+              <span className="text-gray-700">Bună, {userProfile?.first_name || 'Utilizator'}!</span>
               <Button variant="outline" onClick={logout}>
                 Deconectare
               </Button>

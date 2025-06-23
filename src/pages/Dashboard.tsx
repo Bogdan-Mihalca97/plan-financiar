@@ -7,7 +7,7 @@ import { useTransactions } from "@/contexts/TransactionsContext";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { userProfile, logout } = useAuth();
   const { transactions, getTotalIncome, getTotalExpenses, getBalance, getTransactionsByCategory } = useTransactions();
 
   // Calculează statisticile reale
@@ -82,7 +82,7 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <span className="text-gray-700 text-sm sm:text-base hidden sm:inline">
-                Bună, {user?.firstName}!
+                Bună, {userProfile?.first_name || 'Utilizator'}!
               </span>
               <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm">
                 Deconectare
@@ -96,7 +96,7 @@ const Dashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Bună, {user?.firstName}!</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Bună, {userProfile?.first_name || 'Utilizator'}!</h2>
           <p className="text-gray-600 text-sm sm:text-base">Iată o privire de ansamblu asupra situației tale financiare</p>
         </div>
 

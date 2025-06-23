@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +11,7 @@ import TrendChart from "@/components/reports/TrendChart";
 import CategoryBreakdown from "@/components/reports/CategoryBreakdown";
 
 const Reports = () => {
-  const { user, logout } = useAuth();
+  const { userProfile, logout } = useAuth();
   const { transactions, getTotalIncome, getTotalExpenses, getBalance, getTransactionsByCategory } = useTransactions();
 
   // Calculează statisticile reale
@@ -55,7 +54,7 @@ const Reports = () => {
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <span className="text-gray-700 text-sm sm:text-base hidden sm:inline">
-                Bună, {user?.firstName}!
+                Bună, {userProfile?.first_name || 'Utilizator'}!
               </span>
               <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm">
                 Deconectare
