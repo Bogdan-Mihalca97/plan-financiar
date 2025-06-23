@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -58,12 +57,12 @@ const Dashboard = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="flex items-center space-x-2">
-                <PiggyBank className="h-8 w-8 text-indigo-600" />
-                <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
+            <div className="flex items-center space-x-4 lg:space-x-8">
+              <Link to="/dashboard" className="flex items-center space-x-2 flex-shrink-0">
+                <PiggyBank className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-600" />
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">BugetControl</h1>
               </Link>
-              <nav className="hidden md:flex space-x-6">
+              <nav className="hidden lg:flex space-x-6">
                 <Link to="/dashboard" className="text-indigo-600 font-medium">
                   Dashboard
                 </Link>
@@ -81,9 +80,11 @@ const Dashboard = () => {
                 </Link>
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {user?.firstName}!</span>
-              <Button variant="outline" onClick={logout}>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <span className="text-gray-700 text-sm sm:text-base hidden sm:inline">
+                Bună, {user?.firstName}!
+              </span>
+              <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm">
                 Deconectare
               </Button>
             </div>
@@ -95,12 +96,12 @@ const Dashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Bună, {user?.firstName}!</h2>
-          <p className="text-gray-600">Iată o privire de ansamblu asupra situației tale financiare</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Bună, {user?.firstName}!</h2>
+          <p className="text-gray-600 text-sm sm:text-base">Iată o privire de ansamblu asupra situației tale financiare</p>
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Sold Total</CardTitle>

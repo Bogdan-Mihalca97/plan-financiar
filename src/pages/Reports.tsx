@@ -30,12 +30,12 @@ const Reports = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="flex items-center space-x-2">
-                <PiggyBank className="h-8 w-8 text-indigo-600" />
-                <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
+            <div className="flex items-center space-x-4 lg:space-x-8">
+              <Link to="/dashboard" className="flex items-center space-x-2 flex-shrink-0">
+                <PiggyBank className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-600" />
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">BugetControl</h1>
               </Link>
-              <nav className="hidden md:flex space-x-6">
+              <nav className="hidden lg:flex space-x-6">
                 <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Dashboard
                 </Link>
@@ -53,9 +53,11 @@ const Reports = () => {
                 </Link>
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {user?.firstName}!</span>
-              <Button variant="outline" onClick={logout}>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <span className="text-gray-700 text-sm sm:text-base hidden sm:inline">
+                Bună, {user?.firstName}!
+              </span>
+              <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm">
                 Deconectare
               </Button>
             </div>
@@ -66,15 +68,16 @@ const Reports = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Rapoarte</h2>
-            <p className="text-gray-600">Analizează-ți situația financiară cu grafice detaliate</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Rapoarte</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Analizează-ți situația financiară cu grafice detaliate</p>
           </div>
           {hasData && (
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 w-full sm:w-auto">
               <Download className="h-4 w-4" />
-              Exportă Raport
+              <span className="hidden sm:inline">Exportă Raport</span>
+              <span className="sm:hidden">Exportă</span>
             </Button>
           )}
         </div>
