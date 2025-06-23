@@ -91,6 +91,12 @@ const Dashboard = () => {
                   Vezi Toate Tranzacțiile
                 </Link>
               </Button>
+              <Button asChild className="w-full justify-start" variant="outline">
+                <Link to="/budgets">
+                  <Target className="mr-2 h-4 w-4" />
+                  Gestionează Bugetele
+                </Link>
+              </Button>
               <Button className="w-full justify-start" variant="outline">
                 <Target className="mr-2 h-4 w-4" />
                 Creează Obiectiv
