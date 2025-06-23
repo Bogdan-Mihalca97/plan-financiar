@@ -19,49 +19,8 @@ interface TransactionsListProps {
 }
 
 const TransactionsList = ({ searchTerm }: TransactionsListProps) => {
-  // Mock data pentru tranzacții
-  const mockTransactions: Transaction[] = [
-    {
-      id: "1",
-      description: "Cumpărături alimentare",
-      amount: 250,
-      category: "Alimentare",
-      type: "expense",
-      date: "2024-12-23"
-    },
-    {
-      id: "2", 
-      description: "Salariu",
-      amount: 4500,
-      category: "Salariu",
-      type: "income",
-      date: "2024-12-01"
-    },
-    {
-      id: "3",
-      description: "Benzină",
-      amount: 180,
-      category: "Transport", 
-      type: "expense",
-      date: "2024-11-29"
-    },
-    {
-      id: "4",
-      description: "Freelancing proiect",
-      amount: 800,
-      category: "Freelancing",
-      type: "income",
-      date: "2024-11-25"
-    },
-    {
-      id: "5",
-      description: "Factura electricitate",
-      amount: 120,
-      category: "Utilități",
-      type: "expense",
-      date: "2024-11-20"
-    }
-  ];
+  // Start with empty transactions for new users
+  const mockTransactions: Transaction[] = [];
 
   // Filtrare după termenul de căutare
   const filteredTransactions = mockTransactions.filter(transaction =>
@@ -94,55 +53,20 @@ const TransactionsList = ({ searchTerm }: TransactionsListProps) => {
         <CardTitle>Toate Tranzacțiile</CardTitle>
       </CardHeader>
       <CardContent>
-        {filteredTransactions.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">
-              {searchTerm ? "Nu s-au găsit tranzacții care să corespundă căutării." : "Nu ai încă tranzacții adăugate."}
-            </p>
+        <div className="text-center py-12">
+          <div className="mb-4">
+            <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Descriere</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Suma</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Tip</TableHead>
-                <TableHead className="text-right">Acțiuni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTransactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell className="font-medium">
-                    {transaction.description}
-                  </TableCell>
-                  <TableCell>{transaction.category}</TableCell>
-                  <TableCell>
-                    {formatAmount(transaction.amount, transaction.type)}
-                  </TableCell>
-                  <TableCell>{formatDate(transaction.date)}</TableCell>
-                  <TableCell>
-                    <Badge variant={transaction.type === "income" ? "default" : "secondary"}>
-                      {transaction.type === "income" ? "Venit" : "Cheltuială"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nu ai încă tranzacții</h3>
+          <p className="text-gray-500 mb-6">
+            Începe prin a adăuga prima ta tranzacție pentru a urmări veniturile și cheltuielile.
+          </p>
+          <Button className="mx-auto">
+            Adaugă Prima Tranzacție
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

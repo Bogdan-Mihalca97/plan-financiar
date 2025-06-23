@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,11 +37,11 @@ const Dashboard = () => {
             Bun venit, {user?.firstName}!
           </h2>
           <p className="text-gray-600">
-            Iată un rezumat al situației tale financiare
+            Începe prin a adăuga prima ta tranzacție pentru a-ți gestiona bugetul
           </p>
         </div>
 
-        {/* Overview Cards */}
+        {/* Overview Cards - Empty State */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -48,8 +49,8 @@ const Dashboard = () => {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12.350 Lei</div>
-              <p className="text-xs text-muted-foreground">+2.5% față de luna trecută</p>
+              <div className="text-2xl font-bold">0 Lei</div>
+              <p className="text-xs text-muted-foreground">Adaugă tranzacții pentru a vedea soldul</p>
             </CardContent>
           </Card>
 
@@ -59,8 +60,8 @@ const Dashboard = () => {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3.420 Lei</div>
-              <p className="text-xs text-muted-foreground">-1.2% față de luna trecută</p>
+              <div className="text-2xl font-bold">0 Lei</div>
+              <p className="text-xs text-muted-foreground">Nu ai cheltuieli înregistrate</p>
             </CardContent>
           </Card>
 
@@ -70,8 +71,8 @@ const Dashboard = () => {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">75%</div>
-              <p className="text-xs text-muted-foreground">1.500 / 2.000 Lei</p>
+              <div className="text-2xl font-bold">0%</div>
+              <p className="text-xs text-muted-foreground">Setează primul tău obiectiv</p>
             </CardContent>
           </Card>
         </div>
@@ -81,25 +82,25 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Acțiuni Rapide</CardTitle>
-              <CardDescription>Gestionează-ți bugetul rapid</CardDescription>
+              <CardDescription>Începe să îți gestionezi bugetul</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild className="w-full justify-start" variant="outline">
+              <Button asChild className="w-full justify-start">
                 <Link to="/transactions">
                   <Plus className="mr-2 h-4 w-4" />
-                  Vezi Toate Tranzacțiile
+                  Adaugă Prima Tranzacție
                 </Link>
               </Button>
               <Button asChild className="w-full justify-start" variant="outline">
                 <Link to="/budgets">
                   <Target className="mr-2 h-4 w-4" />
-                  Gestionează Bugetele
+                  Creează Primul Buget
                 </Link>
               </Button>
               <Button asChild className="w-full justify-start" variant="outline">
                 <Link to="/goals">
                   <Target className="mr-2 h-4 w-4" />
-                  Vezi Obiectivele
+                  Setează Primul Obiectiv
                 </Link>
               </Button>
               <Button asChild className="w-full justify-start" variant="outline">
@@ -117,32 +118,15 @@ const Dashboard = () => {
               <CardDescription>Ultimele tale tranzacții</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">Cumpărături alimentare</p>
-                    <p className="text-sm text-gray-500">Azi, 14:30</p>
-                  </div>
-                  <span className="text-red-600 font-medium">-250 Lei</span>
+              <div className="text-center py-8">
+                <div className="mb-4">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
                 </div>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">Salariu</p>
-                    <p className="text-sm text-gray-500">1 Dec, 2024</p>
-                  </div>
-                  <span className="text-green-600 font-medium">+4.500 Lei</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">Benzină</p>
-                    <p className="text-sm text-gray-500">29 Nov, 2024</p>
-                  </div>
-                  <span className="text-red-600 font-medium">-180 Lei</span>
-                </div>
-              </div>
-              <div className="mt-4">
-                <Button asChild variant="outline" className="w-full">
-                  <Link to="/transactions">Vezi Toate</Link>
+                <p className="text-gray-500 mb-4">Nu ai încă tranzacții adăugate</p>
+                <Button asChild variant="outline">
+                  <Link to="/transactions">Adaugă Prima Tranzacție</Link>
                 </Button>
               </div>
             </CardContent>
