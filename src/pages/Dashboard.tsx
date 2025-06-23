@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PiggyBank, Plus, TrendingUp, Wallet, CreditCard, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -84,9 +85,11 @@ const Dashboard = () => {
               <CardDescription>Gestionează-ți bugetul rapid</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button className="w-full justify-start" variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Adaugă Tranzacție
+              <Button asChild className="w-full justify-start" variant="outline">
+                <Link to="/transactions">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Vezi Toate Tranzacțiile
+                </Link>
               </Button>
               <Button className="w-full justify-start" variant="outline">
                 <Target className="mr-2 h-4 w-4" />
@@ -127,6 +130,11 @@ const Dashboard = () => {
                   </div>
                   <span className="text-red-600 font-medium">-180 Lei</span>
                 </div>
+              </div>
+              <div className="mt-4">
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/transactions">Vezi Toate</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
