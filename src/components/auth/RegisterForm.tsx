@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface RegisterFormProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { register } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -44,15 +46,22 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
 
     setIsLoading(true);
 
-    // Simulate registration process
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await register(formData);
       toast({
         title: "Cont Creat!",
-        description: "Bun venit la BugetInteligenţa! Poți începe să îți planifici bugetul.",
+        description: "Bun venit la BugetControl! Poți începe să îți planifici bugetul.",
       });
       onClose();
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: "Eroare",
+        description: "A apărut o problemă la crearea contului",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,7 +70,7 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
         <DialogHeader>
           <DialogTitle>Creează Cont</DialogTitle>
           <DialogDescription>
-            Alătură-te la BugetInteligenţa și începe să îți gestionezi finanțele astăzi
+            Alătură-te la BugetControl și începe să îți gestionezi finanțele astăzi
           </DialogDescription>
         </DialogHeader>
         
