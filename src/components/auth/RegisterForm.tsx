@@ -35,8 +35,8 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
     
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords don't match",
+        title: "Eroare",
+        description: "Parolele nu se potrivesc",
         variant: "destructive"
       });
       return;
@@ -48,8 +48,8 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
     setTimeout(() => {
       setIsLoading(false);
       toast({
-        title: "Account Created!",
-        description: "Welcome to BudgetWise! You can now start planning your budget.",
+        title: "Cont Creat!",
+        description: "Bun venit la BugetInteligenţa! Poți începe să îți planifici bugetul.",
       });
       onClose();
     }, 1000);
@@ -59,31 +59,31 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Account</DialogTitle>
+          <DialogTitle>Creează Cont</DialogTitle>
           <DialogDescription>
-            Join BudgetWise and start managing your finances today
+            Alătură-te la BugetInteligenţa și începe să îți gestionezi finanțele astăzi
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName">Prenume</Label>
               <Input
                 id="firstName"
                 name="firstName"
-                placeholder="John"
+                placeholder="Ion"
                 value={formData.firstName}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName">Nume</Label>
               <Input
                 id="lastName"
                 name="lastName"
-                placeholder="Doe"
+                placeholder="Popescu"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
@@ -97,7 +97,7 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
               id="email"
               name="email"
               type="email"
-              placeholder="john@example.com"
+              placeholder="ion@exemplu.com"
               value={formData.email}
               onChange={handleChange}
               required
@@ -105,12 +105,12 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Parola</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Create a strong password"
+              placeholder="Creează o parolă puternică"
               value={formData.password}
               onChange={handleChange}
               required
@@ -118,12 +118,12 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Confirmă Parola</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder="Confirmă parola"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -131,12 +131,12 @@ const RegisterForm = ({ isOpen, onClose, onSwitchToLogin }: RegisterFormProps) =
           </div>
           
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating Account..." : "Create Account"}
+            {isLoading ? "Se creează contul..." : "Creează Cont"}
           </Button>
           
           <div className="text-center">
             <Button type="button" variant="link" onClick={onSwitchToLogin}>
-              Already have an account? Sign in
+              Ai deja un cont? Conectează-te
             </Button>
           </div>
         </form>

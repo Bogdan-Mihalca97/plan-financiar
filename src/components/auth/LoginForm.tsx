@@ -27,8 +27,8 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
     setTimeout(() => {
       setIsLoading(false);
       toast({
-        title: "Login Successful!",
-        description: "Welcome back to BudgetWise",
+        title: "Conectare Reușită!",
+        description: "Bun venit înapoi la BugetInteligenţa",
       });
       onClose();
     }, 1000);
@@ -38,9 +38,9 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Welcome Back</DialogTitle>
+          <DialogTitle>Bun Venit Înapoi</DialogTitle>
           <DialogDescription>
-            Sign in to your BudgetWise account
+            Conectează-te la contul tău BugetInteligenţa
           </DialogDescription>
         </DialogHeader>
         
@@ -50,7 +50,7 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="Introdu adresa de email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -58,11 +58,11 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Parola</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Introdu parola"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -70,12 +70,12 @@ const LoginForm = ({ isOpen, onClose, onSwitchToRegister }: LoginFormProps) => {
           </div>
           
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? "Se conectează..." : "Conectare"}
           </Button>
           
           <div className="text-center">
             <Button type="button" variant="link" onClick={onSwitchToRegister}>
-              Don't have an account? Sign up
+              Nu ai cont? Înregistrează-te
             </Button>
           </div>
         </form>
