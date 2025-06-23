@@ -1,14 +1,10 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calculator, PiggyBank, TrendingUp, Users } from "lucide-react";
-import LoginForm from "@/components/auth/LoginForm";
-import RegisterForm from "@/components/auth/RegisterForm";
+import { Link } from "react-router-dom";
 
 const Index = () => {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -20,11 +16,11 @@ const Index = () => {
               <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
             </div>
             <div className="space-x-4">
-              <Button variant="outline" onClick={() => setShowLogin(true)}>
-                Conectare
+              <Button variant="outline" asChild>
+                <Link to="/auth">Conectare</Link>
               </Button>
-              <Button onClick={() => setShowRegister(true)}>
-                Începe Acum
+              <Button asChild>
+                <Link to="/auth">Începe Acum</Link>
               </Button>
             </div>
           </div>
@@ -41,11 +37,11 @@ const Index = () => {
             Planifică, urmărește și optimizează-ți bugetul cu instrumentele noastre intuitive. 
             Fă ca fiecare leu să conteze și atinge-ți obiectivele financiare.
           </p>
-          <Button size="lg" onClick={() => setShowRegister(true)} className="mr-4">
-            Începe Planificarea Acum
+          <Button size="lg" asChild className="mr-4">
+            <Link to="/auth">Începe Planificarea Acum</Link>
           </Button>
-          <Button size="lg" variant="outline" onClick={() => setShowLogin(true)}>
-            Ai deja un cont?
+          <Button size="lg" variant="outline" asChild>
+            <Link to="/auth">Ai deja un cont?</Link>
           </Button>
         </div>
 
@@ -100,26 +96,6 @@ const Index = () => {
           </div>
         </div>
       </main>
-
-      {/* Login Modal */}
-      <LoginForm 
-        isOpen={showLogin} 
-        onClose={() => setShowLogin(false)}
-        onSwitchToRegister={() => {
-          setShowLogin(false);
-          setShowRegister(true);
-        }}
-      />
-
-      {/* Register Modal */}
-      <RegisterForm 
-        isOpen={showRegister} 
-        onClose={() => setShowRegister(false)}
-        onSwitchToLogin={() => {
-          setShowRegister(false);
-          setShowLogin(true);
-        }}
-      />
     </div>
   );
 };
