@@ -10,11 +10,29 @@ import AddTransactionForm from "@/components/transactions/AddTransactionForm";
 import ImportCSVForm from "@/components/transactions/ImportCSVForm";
 import TransactionsList from "@/components/transactions/TransactionsList";
 
+export interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string;
+}
+
 const Transactions = () => {
   const { user, logout } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showImportForm, setShowImportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  const handleTransactionsImported = (importedTransactions: Omit<Transaction, 'id'>[]) => {
+    const newTransactions = importedTransactions.map(transaction => ({
+      ...transaction,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    }));
+    setTransactions(prev => [...prev, ...newTransactions]);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,7 +120,7 @@ const Transactions = () => {
         </Card>
 
         {/* Transactions List */}
-        <TransactionsList searchTerm={searchTerm} />
+        <TransactionsList searchTerm={searchTerm} transactions={transactions} />
 
         {/* Add Transaction Modal */}
         <AddTransactionForm 
@@ -113,7 +131,8 @@ const Transactions = () => {
         {/* Import CSV Modal */}
         <ImportCSVForm 
           isOpen={showImportForm} 
-          onClose={() => setShowImportForm(false)} 
+          onClose={() => setShowImportForm(false)}
+          onTransactionsImported={handleTransactionsImported}
         />
       </main>
     </div>

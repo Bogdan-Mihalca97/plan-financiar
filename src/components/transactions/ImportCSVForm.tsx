@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, CheckCircle } from "lucide-react";
+import type { Transaction } from "@/pages/Transactions";
 
 interface ImportCSVFormProps {
   isOpen: boolean;
   onClose: () => void;
+  onTransactionsImported: (transactions: Omit<Transaction, 'id'>[]) => void;
 }
 
 interface ParsedTransaction {
@@ -21,7 +23,7 @@ interface ParsedTransaction {
   category: string;
 }
 
-const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
+const ImportCSVForm = ({ isOpen, onClose, onTransactionsImported }: ImportCSVFormProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([]);
@@ -161,8 +163,9 @@ const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
   };
 
   const handleSave = () => {
-    // Aici ar trebui să salvezi tranzacțiile în baza de date
-    // Pentru moment, simulăm salvarea
+    // Actually pass the transactions to the parent component
+    onTransactionsImported(parsedTransactions);
+    
     toast({
       title: "Tranzacții salvate!",
       description: `${parsedTransactions.length} tranzacții au fost adăugate în cont.`
