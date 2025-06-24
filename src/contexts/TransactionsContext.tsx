@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +39,16 @@ interface TransactionsProviderProps {
   children: ReactNode;
 }
 
+// Helper function to transform Supabase data to our Transaction interface
+const transformSupabaseTransaction = (data: any): Transaction => ({
+  id: data.id,
+  date: data.date,
+  description: data.description,
+  amount: Number(data.amount),
+  type: data.type as "income" | "expense",
+  category: data.category
+});
+
 export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -61,7 +70,8 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
       if (error) throw error;
 
-      setTransactions(data || []);
+      const transformedData = (data || []).map(transformSupabaseTransaction);
+      setTransactions(transformedData);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
@@ -89,7 +99,8 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
     if (error) throw error;
 
-    setTransactions(prev => [data, ...prev]);
+    const transformedData = transformSupabaseTransaction(data);
+    setTransactions(prev => [transformedData, ...prev]);
   };
 
   const addTransactions = async (newTransactions: Omit<Transaction, 'id'>[]) => {
@@ -108,7 +119,8 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
     if (error) throw error;
 
-    setTransactions(prev => [...(data || []), ...prev]);
+    const transformedData = (data || []).map(transformSupabaseTransaction);
+    setTransactions(prev => [...transformedData, ...prev]);
   };
 
   const updateTransaction = async (id: string, updatedTransaction: Partial<Transaction>) => {
@@ -128,8 +140,9 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
     if (error) throw error;
 
+    const transformedData = transformSupabaseTransaction(data);
     setTransactions(prev => prev.map(transaction => 
-      transaction.id === id ? data : transaction
+      transaction.id === id ? transformedData : transaction
     ));
   };
 
