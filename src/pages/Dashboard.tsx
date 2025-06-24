@@ -1,16 +1,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { PiggyBank, TrendingUp, TrendingDown, Target, Plus } from "lucide-react";
+import { PiggyBank, TrendingUp, TrendingDown, Target, Plus, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 const Dashboard = () => {
   const {
     userProfile,
-    logout
+    logout,
+    isAuthenticated,
+    loading,
+    user
   } = useAuth();
+  
   const {
     transactions,
     getTotalIncome,
@@ -18,6 +22,23 @@ const Dashboard = () => {
     getBalance,
     getTransactionsByCategory
   } = useTransactions();
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Se încarcă...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
 
   // Calculează statisticile reale
   const totalIncome = getTotalIncome();
@@ -96,10 +117,16 @@ const Dashboard = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <span className="text-gray-700 text-sm sm:text-base hidden sm:inline">
-                Bună, {userProfile?.first_name || 'Utilizator'}!
-              </span>
+              <div className="text-right hidden sm:block">
+                <div className="text-sm text-gray-700">
+                  Bună, {userProfile?.first_name || 'Utilizator'}!
+                </div>
+                <div className="text-xs text-gray-500">
+                  {user?.email}
+                </div>
+              </div>
               <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm">
+                <LogOut className="h-4 w-4 mr-1" />
                 Deconectare
               </Button>
             </div>

@@ -36,6 +36,27 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Clean up all auth-related storage
+const cleanupAuthState = () => {
+  try {
+    // Remove all Supabase auth keys from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Remove from sessionStorage if present
+    Object.keys(sessionStorage || {}).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning up auth state:', error);
+  }
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -100,6 +121,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
+      // Clean up existing state before login
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Global signout failed, continuing with login');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -112,6 +144,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           title: "Conectare Reușită!",
           description: "Bun venit înapoi la BugetControl",
         });
+        
+        // Force page reload for clean state
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -126,6 +163,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (userData: { firstName: string; lastName: string; email: string; password: string }) => {
     try {
+      // Clean up existing state before register
+      cleanupAuthState();
+      
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
@@ -161,20 +201,54 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log('Starting logout process...');
+      
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Clear local state
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      
+      // Attempt global sign out
+      try {
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error) {
+          console.error('Supabase signout error:', error);
+        }
+      } catch (error) {
+        console.error('Error during Supabase signout:', error);
+        // Continue with logout even if Supabase signout fails
+      }
       
       toast({
         title: "Deconectat cu succes",
         description: "Te-ai deconectat din cont",
       });
+      
+      // Force page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+      
     } catch (error: any) {
       console.error('Logout error:', error);
+      
+      // Force cleanup and redirect even if there's an error
+      cleanupAuthState();
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      
       toast({
-        title: "Eroare la deconectare",
-        description: error.message || "A apărut o problemă la deconectare",
-        variant: "destructive"
+        title: "Deconectat",
+        description: "Sesiunea a fost închisă",
       });
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     }
   };
 
