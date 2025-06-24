@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,7 +38,7 @@ interface FamilyContextType {
   familyMembers: FamilyMember[];
   familyInvitations: FamilyInvitation[];
   isAdmin: boolean;
-  createFamily: (name: string) => Promise<void>;
+  createFamily: (name: string) => Promise<FamilyGroup>;
   inviteMember: (email: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<void>;
   declineInvitation: (invitationId: string) => Promise<void>;
