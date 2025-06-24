@@ -200,6 +200,48 @@ export type Database = {
           },
         ]
       }
+      investments: {
+        Row: {
+          created_at: string
+          current_price: number
+          id: string
+          name: string
+          purchase_date: string
+          purchase_price: number
+          quantity: number
+          symbol: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_price: number
+          id?: string
+          name: string
+          purchase_date: string
+          purchase_price: number
+          quantity: number
+          symbol?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_price?: number
+          id?: string
+          name?: string
+          purchase_date?: string
+          purchase_price?: number
+          quantity?: number
+          symbol?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

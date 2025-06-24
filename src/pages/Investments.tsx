@@ -32,12 +32,12 @@ const Investments = () => {
   const fetchInvestments = async () => {
     try {
       const { data, error } = await supabase
-        .from('investments')
+        .from('investments' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInvestments(data || []);
+      setInvestments((data || []) as Investment[]);
     } catch (error: any) {
       console.error('Error fetching investments:', error);
       toast({
