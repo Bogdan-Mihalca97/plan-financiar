@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,22 +22,43 @@ const Budgets = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchBudgets = async () => {
     try {
+      setError(null);
+      console.log('Attempting to fetch budgets...');
+      
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No authenticated user found');
+        setError('Utilizatorul nu este autentificat');
+        return;
+      }
+
+      console.log('User authenticated, fetching budgets for user:', user.id);
+
       const { data, error } = await supabase
         .from('budgets')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Budgets fetched successfully:', data);
       setBudgets(data || []);
     } catch (error: any) {
       console.error('Error fetching budgets:', error);
+      const errorMessage = error?.message || 'Eroare necunoscută la încărcarea bugetelor';
+      setError(errorMessage);
       toast({
         title: "Eroare la încărcarea bugetelor",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -60,6 +82,23 @@ const Budgets = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Se încarcă bugetele...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <Target className="h-16 w-16 mx-auto mb-4" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Eroare la încărcarea bugetelor</h3>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <Button onClick={fetchBudgets} variant="outline">
+            Încearcă din nou
+          </Button>
         </div>
       </div>
     );
