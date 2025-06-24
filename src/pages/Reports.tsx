@@ -42,7 +42,7 @@ const Reports = () => {
                   Tranzacții
                 </Link>
                 <Link to="/budgets" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Bugete
+                  Buget
                 </Link>
                 <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Obiective

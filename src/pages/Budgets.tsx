@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,7 +76,7 @@ const Budgets = () => {
                 <PiggyBank className="h-8 w-8 text-indigo-600" />
                 <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
               </Link>
-              <nav className="hidden md:flex space-x-6">
+              <nav className="hidden lg:flex space-x-6">
                 <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Dashboard
                 </Link>
@@ -85,7 +84,7 @@ const Budgets = () => {
                   Tranzacții
                 </Link>
                 <Link to="/budgets" className="text-indigo-600 font-medium">
-                  Bugete
+                  Buget
                 </Link>
                 <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Obiective
