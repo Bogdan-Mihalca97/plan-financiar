@@ -74,7 +74,7 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Utilizatorul nu este autentificat');
 
-      const { error } = await supabase.from('investments' as any).insert({
+      const { error } = await supabase.from('investments').insert({
         user_id: user.id,
         name: formData.name,
         type: formData.type,
