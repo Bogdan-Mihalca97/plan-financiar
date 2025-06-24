@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import TickerSearch from "./TickerSearch";
 
 interface AddInvestmentFormProps {
   isOpen: boolean;
@@ -53,6 +53,16 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleTickerSelect = (ticker: any) => {
+    setFormData(prev => ({
+      ...prev,
+      name: ticker.name,
+      symbol: ticker.symbol,
+      current_price: ticker.price > 0 ? ticker.price.toString() : prev.current_price,
+      type: prev.type || "Acțiuni" // Default to stocks if not set
     }));
   };
 
@@ -127,6 +137,12 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <TickerSearch 
+            onTickerSelect={handleTickerSelect}
+            value={formData.symbol}
+            onChange={(value) => handleInputChange("symbol", value)}
+          />
+
           <div className="space-y-2">
             <Label htmlFor="name">Nume Investiție *</Label>
             <Input
@@ -152,16 +168,6 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="symbol">Simbol/Ticker (opțional)</Label>
-            <Input
-              id="symbol"
-              value={formData.symbol}
-              onChange={(e) => handleInputChange("symbol", e.target.value)}
-              placeholder="ex: AAPL"
-            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

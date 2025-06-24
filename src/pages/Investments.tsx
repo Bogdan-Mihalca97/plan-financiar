@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AddInvestmentForm from "@/components/investments/AddInvestmentForm";
+import RefreshPricesButton from "@/components/investments/RefreshPricesButton";
 import { useToast } from "@/hooks/use-toast";
 
 interface Investment {
@@ -90,10 +90,16 @@ const Investments = () => {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Investiții</h2>
             <p className="text-gray-600">Gestionează și urmărește portofoliul tău de investiții</p>
           </div>
-          <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Adaugă Investiție
-          </Button>
+          <div className="flex gap-2">
+            <RefreshPricesButton 
+              investments={investments}
+              onRefresh={fetchInvestments}
+            />
+            <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Adaugă Investiție
+            </Button>
+          </div>
         </div>
 
         {/* Overview Cards */}
