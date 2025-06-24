@@ -7,8 +7,7 @@ import { TransactionsProvider } from './contexts/TransactionsContext';
 import { FamilyProvider } from "@/contexts/FamilyContext";
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
-import Budgets from './pages/Budgets';
-import Goals from './pages/Goals';
+import BudgetsAndGoals from './pages/BudgetsAndGoals';
 import Investments from './pages/Investments';
 import Family from "@/pages/Family";
 import Reports from "./pages/Reports";
@@ -29,8 +28,8 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/transactions" element={<Transactions />} />
-                <Route path="/budgets" element={<Budgets />} />
-                <Route path="/goals" element={<Goals />} />
+                <Route path="/budgets" element={<BudgetsAndGoals />} />
+                <Route path="/goals" element={<BudgetsAndGoals />} />
                 <Route path="/investments" element={<Investments />} />
                 <Route path="/family" element={<Family />} />
                 <Route path="/reports" element={<Reports />} />
