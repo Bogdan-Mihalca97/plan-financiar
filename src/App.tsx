@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
+import { TransactionsProvider } from './contexts/TransactionsContext';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Budgets from './pages/Budgets';
@@ -18,17 +19,19 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <FamilyProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="/budgets" element={<Budgets />} />
-              <Route path="/goals" element={<Goals />} />
-              <Route path="/family" element={<Family />} />
-            </Routes>
-            <Toaster />
-          </BrowserRouter>
+          <TransactionsProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/transactions" element={<Transactions />} />
+                <Route path="/budgets" element={<Budgets />} />
+                <Route path="/goals" element={<Goals />} />
+                <Route path="/family" element={<Family />} />
+              </Routes>
+              <Toaster />
+            </BrowserRouter>
+          </TransactionsProvider>
         </FamilyProvider>
       </AuthProvider>
     </QueryClientProvider>
