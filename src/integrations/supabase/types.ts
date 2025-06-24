@@ -321,10 +321,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_family_admin: {
-        Args: { family_id: string; user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

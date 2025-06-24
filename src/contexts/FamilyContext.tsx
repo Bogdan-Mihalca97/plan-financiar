@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -69,23 +68,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Loading family data for user:', user.id);
 
-      // Get current user's family membership with improved query
+      // Get current user's family membership - simplified query
       const { data: membership, error: membershipError } = await supabase
         .from('family_memberships')
-        .select(`
-          id,
-          family_group_id,
-          user_id,
-          role,
-          joined_at,
-          family_groups (
-            id,
-            name,
-            created_by,
-            created_at,
-            updated_at
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -94,12 +80,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw membershipError;
       }
 
-      if (membership && membership.family_groups) {
-        const familyGroup = membership.family_groups as FamilyGroup;
+      if (membership) {
+        // Get the family group details
+        const { data: familyGroup, error: familyError } = await supabase
+          .from('family_groups')
+          .select('*')
+          .eq('id', membership.family_group_id)
+          .single();
+
+        if (familyError) {
+          console.error('Error loading family group:', familyError);
+          throw familyError;
+        }
+
         setCurrentFamily(familyGroup);
         setIsAdmin(membership.role === 'admin');
 
-        // Load family members
+        // Load all family members (only visible to family members due to RLS)
         const { data: members, error: membersError } = await supabase
           .from('family_memberships')
           .select('*')
@@ -107,10 +104,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         if (membersError) {
           console.error('Error loading family members:', membersError);
-          throw membersError;
-        }
-
-        if (members) {
+          // Don't throw error here, just continue with empty members
+          setFamilyMembers([]);
+        } else if (members) {
           // Get user profiles for each member
           const memberProfiles: FamilyMember[] = [];
           for (const member of members) {
@@ -183,8 +179,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     console.log('Creating family for user:', user.id, 'with name:', name);
 
     try {
-      // Start a transaction-like approach
-      // First create the family group
+      // Create the family group
       const { data: family, error: familyError } = await supabase
         .from('family_groups')
         .insert([{ 
@@ -205,7 +200,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Family created successfully:', family);
 
-      // Then add creator as admin member
+      // Add creator as admin member
       const { data: membership, error: memberError } = await supabase
         .from('family_memberships')
         .insert([{
@@ -250,16 +245,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Invitation sent successfully",
+        title: "Succes",
+        description: "Invitația a fost trimisă cu succes",
       });
 
       await loadFamilyData();
     } catch (error) {
       console.error('Error inviting member:', error);
       toast({
-        title: "Error",
-        description: "Failed to send invitation",
+        title: "Eroare",
+        description: "Nu s-a putut trimite invitația",
         variant: "destructive",
       });
     }
@@ -340,6 +335,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const removeMember = async (memberId: string) => {
     try {
+      if (!isAdmin) {
+        throw new Error('Nu ai permisiunea să elimini membri');
+      }
+
       const { error } = await supabase
         .from('family_memberships')
         .delete()
@@ -348,16 +347,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Member removed successfully",
+        title: "Succes",
+        description: "Membrul a fost eliminat cu succes",
       });
 
       await loadFamilyData();
     } catch (error) {
       console.error('Error removing member:', error);
       toast({
-        title: "Error",
-        description: "Failed to remove member",
+        title: "Eroare",
+        description: "Nu s-a putut elimina membrul",
         variant: "destructive",
       });
     }
