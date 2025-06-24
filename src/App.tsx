@@ -10,6 +10,7 @@ import Transactions from './pages/Transactions';
 import Budgets from './pages/Budgets';
 import Goals from './pages/Goals';
 import Family from "@/pages/Family";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import { Toaster } from "@/components/ui/toaster"
 
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/budgets" element={<Budgets />} />
                 <Route path="/goals" element={<Goals />} />
                 <Route path="/family" element={<Family />} />
+                <Route path="/reports" element={<Reports />} />
               </Routes>
               <Toaster />
             </BrowserRouter>
