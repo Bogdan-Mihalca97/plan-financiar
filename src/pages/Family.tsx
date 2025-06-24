@@ -18,7 +18,7 @@ const Family = () => {
     currentFamily, 
     familyMembers, 
     familyInvitations,
-    isAdmin,
+    isCreator,
     createFamily,
     inviteMember,
     acceptInvitation,
@@ -189,14 +189,14 @@ const Family = () => {
                   <h2 className="text-2xl font-bold text-gray-900">{currentFamily.name}</h2>
                   <p className="text-gray-600 mt-1">
                     {familyMembers.length} membri • 
-                    {isAdmin ? " Administrator" : " Membru"}
+                    {isCreator ? " Creator" : " Membru"}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {isAdmin && (
+                  {isCreator && (
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       <Settings className="h-3 w-3 mr-1" />
-                      Admin
+                      Creator
                     </Badge>
                   )}
                   <Button variant="outline" size="sm" onClick={leaveFamily}>
@@ -231,10 +231,10 @@ const Family = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                            {member.role === 'admin' ? 'Admin' : 'Membru'}
+                          <Badge variant={member.is_creator ? 'default' : 'secondary'}>
+                            {member.is_creator ? 'Creator' : 'Membru'}
                           </Badge>
-                          {isAdmin && member.role !== 'admin' && (
+                          {isCreator && !member.is_creator && (
                             <Button 
                               variant="outline" 
                               size="sm"
@@ -253,7 +253,7 @@ const Family = () => {
               {/* Invite Members & Pending Invitations */}
               <div className="space-y-6">
                 {/* Invite Form */}
-                {isAdmin && (
+                {isCreator && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -309,6 +309,26 @@ const Family = () => {
                 )}
               </div>
             </div>
+
+            {/* Info about shared features */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Funcții Familie</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-gray-600">
+                  <p className="mb-2">
+                    Ca membru al acestei familii, ai acces la:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Bugetele partajate ale familiei</li>
+                    <li>Obiectivele financiare comune</li>
+                    <li>Tranzacțiile familiei</li>
+                    <li>Rapoartele financiare comune</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </main>

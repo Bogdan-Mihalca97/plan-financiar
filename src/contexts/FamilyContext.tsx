@@ -16,11 +16,11 @@ export interface FamilyMember {
   id: string;
   family_group_id: string;
   user_id: string;
-  role: 'admin' | 'member';
   joined_at: string;
   email?: string;
   first_name?: string;
   last_name?: string;
+  is_creator?: boolean;
 }
 
 export interface FamilyInvitation {
@@ -37,7 +37,7 @@ interface FamilyContextType {
   currentFamily: FamilyGroup | null;
   familyMembers: FamilyMember[];
   familyInvitations: FamilyInvitation[];
-  isAdmin: boolean;
+  isCreator: boolean;
   createFamily: (name: string) => Promise<FamilyGroup>;
   inviteMember: (email: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<void>;
@@ -55,7 +55,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [familyInvitations, setFamilyInvitations] = useState<FamilyInvitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
 
@@ -128,7 +128,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         setCurrentFamily(familyGroup);
-        setIsAdmin(membership.role === 'admin');
+        setIsCreator(familyGroup.created_by === user.id);
 
         // Load all family members
         try {
@@ -157,17 +157,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 memberProfiles.push({
                   ...member,
-                  role: member.role as 'admin' | 'member',
                   email: profile?.email,
                   first_name: profile?.first_name,
                   last_name: profile?.last_name,
+                  is_creator: familyGroup.created_by === member.user_id,
                 });
               } catch (profileError) {
                 console.error('Error loading profile for user:', member.user_id, profileError);
                 // Add member without profile info
                 memberProfiles.push({
                   ...member,
-                  role: member.role as 'admin' | 'member',
+                  is_creator: familyGroup.created_by === member.user_id,
                 });
               }
             }
@@ -178,8 +178,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setFamilyMembers([]);
         }
 
-        // Load pending invitations if user is admin
-        if (membership.role === 'admin') {
+        // Load pending invitations if user is the creator
+        if (familyGroup.created_by === user.id) {
           try {
             const invitationsResult = await retryRequest(async () => {
               return await supabase
@@ -209,7 +209,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentFamily(null);
         setFamilyMembers([]);
         setFamilyInvitations([]);
-        setIsAdmin(false);
+        setIsCreator(false);
       }
     } catch (error: any) {
       console.error('Error loading family data:', error);
@@ -279,14 +279,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Family created successfully:', family);
 
-      // Add creator as admin member with retry logic
+      // Add creator as member with retry logic
       const membershipResult = await retryRequest(async () => {
         return await supabase
           .from('family_memberships')
           .insert([{
             family_group_id: family.id,
-            user_id: user.id,
-            role: 'admin'
+            user_id: user.id
           }])
           .select()
           .single();
@@ -295,17 +294,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data: membership, error: memberError } = membershipResult;
 
       if (memberError) {
-        console.error('Error creating admin membership:', memberError);
+        console.error('Error creating membership:', memberError);
         // Try to cleanup the family group if membership creation fails
         try {
           await supabase.from('family_groups').delete().eq('id', family.id);
         } catch (cleanupError) {
           console.error('Error cleaning up family group:', cleanupError);
         }
-        throw new Error(`Eroare la adăugarea ca administrator: ${memberError.message}`);
+        throw new Error(`Eroare la adăugarea ca membru: ${memberError.message}`);
       }
 
-      console.log('Admin membership created successfully:', membership);
+      console.log('Membership created successfully:', membership);
 
       // Reload family data to reflect changes
       await loadFamilyData();
@@ -371,8 +370,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .from('family_memberships')
         .insert([{
           family_group_id: invitation.family_group_id,
-          user_id: user.id,
-          role: 'member'
+          user_id: user.id
         }]);
 
       if (memberError) throw memberError;
@@ -386,16 +384,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (inviteError) throw inviteError;
 
       toast({
-        title: "Success",
-        description: "Joined family successfully",
+        title: "Succes",
+        description: "Te-ai alăturat familiei cu succes",
       });
 
       await loadFamilyData();
     } catch (error) {
       console.error('Error accepting invitation:', error);
       toast({
-        title: "Error",
-        description: "Failed to accept invitation",
+        title: "Eroare",
+        description: "Nu s-a putut accepta invitația",
         variant: "destructive",
       });
     }
@@ -411,16 +409,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Invitation declined",
+        title: "Succes",
+        description: "Invitația a fost refuzată",
       });
 
       await loadFamilyData();
     } catch (error) {
       console.error('Error declining invitation:', error);
       toast({
-        title: "Error",
-        description: "Failed to decline invitation",
+        title: "Eroare",
+        description: "Nu s-a putut refuza invitația",
         variant: "destructive",
       });
     }
@@ -428,8 +426,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const removeMember = async (memberId: string) => {
     try {
-      if (!isAdmin) {
-        throw new Error('Nu ai permisiunea să elimini membri');
+      if (!isCreator) {
+        throw new Error('Doar creatorul familiei poate elimina membri');
       }
 
       const { error } = await supabase
@@ -468,19 +466,19 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Left family successfully",
+        title: "Succes",
+        description: "Ai părăsit familia cu succes",
       });
 
       setCurrentFamily(null);
       setFamilyMembers([]);
       setFamilyInvitations([]);
-      setIsAdmin(false);
+      setIsCreator(false);
     } catch (error) {
       console.error('Error leaving family:', error);
       toast({
-        title: "Error",
-        description: "Failed to leave family",
+        title: "Eroare",
+        description: "Nu s-a putut părăsi familia",
         variant: "destructive",
       });
     }
@@ -495,7 +493,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     currentFamily,
     familyMembers,
     familyInvitations,
-    isAdmin,
+    isCreator,
     createFamily,
     inviteMember,
     acceptInvitation,

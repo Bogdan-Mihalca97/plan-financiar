@@ -117,21 +117,18 @@ export type Database = {
           family_group_id: string
           id: string
           joined_at: string
-          role: string
           user_id: string
         }
         Insert: {
           family_group_id: string
           id?: string
           joined_at?: string
-          role: string
           user_id: string
         }
         Update: {
           family_group_id?: string
           id?: string
           joined_at?: string
-          role?: string
           user_id?: string
         }
         Relationships: [
