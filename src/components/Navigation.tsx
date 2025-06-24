@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, CreditCard, Target, PieChart, Users, BarChart3, LogOut, TrendingUp } from 'lucide-react';
+import { Home, CreditCard, Target, Users, BarChart3, LogOut, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -12,8 +12,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/transactions', label: 'Tranzacții', icon: CreditCard },
-    { path: '/budgets', label: 'Bugete', icon: Target },
-    { path: '/goals', label: 'Obiective', icon: PieChart },
+    { path: '/budgets', label: 'Buget', icon: Target },
     { path: '/investments', label: 'Investiții', icon: TrendingUp },
     { path: '/family', label: 'Familie', icon: Users },
     { path: '/reports', label: 'Rapoarte', icon: BarChart3 },
@@ -34,7 +33,8 @@ const Navigation = () => {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === item.path || 
+                  (item.path === '/budgets' && location.pathname === '/goals');
                 return (
                   <Link
                     key={item.path}
