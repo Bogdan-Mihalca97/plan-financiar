@@ -56,6 +56,9 @@ const Transactions = () => {
                 <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Obiective
                 </Link>
+                <Link to="/family" className="text-gray-700 hover:text-indigo-600 font-medium">
+                  Familie
+                </Link>
                 <Link to="/reports" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Rapoarte
                 </Link>

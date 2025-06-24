@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFamily } from '@/contexts/FamilyContext';
 
 export interface Transaction {
   id: string;
@@ -51,6 +52,7 @@ const transformSupabaseTransaction = (data: any): Transaction => ({
 
 export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ children }) => {
   const { user } = useAuth();
+  const { currentFamily } = useFamily();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,10 +65,19 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('transactions')
         .select('*')
         .order('date', { ascending: false });
+
+      // If user is part of a family, fetch family transactions too
+      if (currentFamily) {
+        query = query.or(`user_id.eq.${user.id},family_group_id.eq.${currentFamily.id}`);
+      } else {
+        query = query.eq('user_id', user.id).is('family_group_id', null);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -82,18 +93,21 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
   useEffect(() => {
     fetchTransactions();
-  }, [user]);
+  }, [user, currentFamily?.id]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error('User must be authenticated');
 
+    const transactionData = {
+      ...transaction,
+      user_id: user.id,
+      amount: Number(transaction.amount),
+      family_group_id: currentFamily?.id || null
+    };
+
     const { data, error } = await supabase
       .from('transactions')
-      .insert([{
-        ...transaction,
-        user_id: user.id,
-        amount: Number(transaction.amount)
-      }])
+      .insert([transactionData])
       .select()
       .single();
 
@@ -109,7 +123,8 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
     const transactionsWithUserId = newTransactions.map(transaction => ({
       ...transaction,
       user_id: user.id,
-      amount: Number(transaction.amount)
+      amount: Number(transaction.amount),
+      family_group_id: currentFamily?.id || null
     }));
 
     const { data, error } = await supabase

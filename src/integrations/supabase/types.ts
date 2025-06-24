@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          family_group_id: string | null
           id: string
           limit_amount: number
           period: string
@@ -22,6 +23,7 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
+          family_group_id?: string | null
           id?: string
           limit_amount: number
           period: string
@@ -31,13 +33,116 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          family_group_id?: string | null
           id?: string
           limit_amount?: number
           period?: string
           updated_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_family_group_id_fkey"
+            columns: ["family_group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
         Relationships: []
+      }
+      family_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          family_group_id: string
+          id: string
+          invited_by: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          family_group_id: string
+          id?: string
+          invited_by: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          family_group_id?: string
+          id?: string
+          invited_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_invitations_family_group_id_fkey"
+            columns: ["family_group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_memberships: {
+        Row: {
+          family_group_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          family_group_id: string
+          id?: string
+          joined_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          family_group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_memberships_family_group_id_fkey"
+            columns: ["family_group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goals: {
         Row: {
@@ -46,6 +151,7 @@ export type Database = {
           current_amount: number
           deadline: string
           description: string | null
+          family_group_id: string | null
           id: string
           is_completed: boolean
           priority: string | null
@@ -60,6 +166,7 @@ export type Database = {
           current_amount?: number
           deadline: string
           description?: string | null
+          family_group_id?: string | null
           id?: string
           is_completed?: boolean
           priority?: string | null
@@ -74,6 +181,7 @@ export type Database = {
           current_amount?: number
           deadline?: string
           description?: string | null
+          family_group_id?: string | null
           id?: string
           is_completed?: boolean
           priority?: string | null
@@ -82,7 +190,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "goals_family_group_id_fkey"
+            columns: ["family_group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -118,6 +234,7 @@ export type Database = {
           created_at: string
           date: string
           description: string
+          family_group_id: string | null
           id: string
           type: string
           updated_at: string
@@ -129,6 +246,7 @@ export type Database = {
           created_at?: string
           date: string
           description: string
+          family_group_id?: string | null
           id?: string
           type: string
           updated_at?: string
@@ -140,12 +258,21 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string
+          family_group_id?: string | null
           id?: string
           type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_family_group_id_fkey"
+            columns: ["family_group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
