@@ -65,22 +65,22 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
     try {
       setLoading(true);
-      let query = supabase
+      console.log('Fetching transactions for user:', user.id);
+      
+      // Simplified query to avoid RLS issues - only fetch personal transactions for now
+      const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('user_id', user.id)
+        .is('family_group_id', null)
         .order('date', { ascending: false });
 
-      // If user is part of a family, fetch family transactions too
-      if (currentFamily) {
-        query = query.or(`user_id.eq.${user.id},family_group_id.eq.${currentFamily.id}`);
-      } else {
-        query = query.eq('user_id', user.id).is('family_group_id', null);
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        throw error;
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
+      console.log('Fetched transactions:', data);
       const transformedData = (data || []).map(transformSupabaseTransaction);
       setTransactions(transformedData);
     } catch (error) {
@@ -93,28 +93,41 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
   useEffect(() => {
     fetchTransactions();
-  }, [user, currentFamily?.id]);
+  }, [user?.id]); // Removed currentFamily dependency to simplify
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error('User must be authenticated');
+
+    console.log('Adding transaction:', transaction);
 
     const transactionData = {
       ...transaction,
       user_id: user.id,
       amount: Number(transaction.amount),
-      family_group_id: currentFamily?.id || null
+      family_group_id: null // Set to null for now to avoid RLS issues
     };
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert([transactionData])
-      .select()
-      .single();
+    console.log('Transaction data to insert:', transactionData);
 
-    if (error) throw error;
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([transactionData])
+        .select()
+        .single();
 
-    const transformedData = transformSupabaseTransaction(data);
-    setTransactions(prev => [transformedData, ...prev]);
+      if (error) {
+        console.error('Error adding transaction:', error);
+        throw error;
+      }
+
+      console.log('Successfully added transaction:', data);
+      const transformedData = transformSupabaseTransaction(data);
+      setTransactions(prev => [transformedData, ...prev]);
+    } catch (error) {
+      console.error('Error in addTransaction:', error);
+      throw error;
+    }
   };
 
   const addTransactions = async (newTransactions: Omit<Transaction, 'id'>[]) => {
@@ -124,7 +137,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
       ...transaction,
       user_id: user.id,
       amount: Number(transaction.amount),
-      family_group_id: currentFamily?.id || null
+      family_group_id: null // Set to null for now
     }));
 
     const { data, error } = await supabase
