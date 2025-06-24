@@ -1,18 +1,20 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PiggyBank, Plus, Search, Filter, Upload } from "lucide-react";
+import { Plus, Search, Filter, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { Link } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 import AddTransactionForm from "@/components/transactions/AddTransactionForm";
 import ImportCSVForm from "@/components/transactions/ImportCSVForm";
 import TransactionsList from "@/components/transactions/TransactionsList";
 
 const Transactions = () => {
-  const { userProfile, logout } = useAuth();
-  const { transactions, addTransactions, loading } = useTransactions();
+  const { isAuthenticated, loading } = useAuth();
+  const { transactions, addTransactions } = useTransactions();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showImportForm, setShowImportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,47 +34,13 @@ const Transactions = () => {
     );
   }
 
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="flex items-center space-x-2">
-                <PiggyBank className="h-8 w-8 text-indigo-600" />
-                <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
-              </Link>
-              <nav className="hidden lg:flex space-x-6">
-                <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Dashboard
-                </Link>
-                <Link to="/transactions" className="text-indigo-600 font-medium">
-                  Tranzacții
-                </Link>
-                <Link to="/budgets" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Buget
-                </Link>
-                <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Obiective
-                </Link>
-                <Link to="/family" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Familie
-                </Link>
-                <Link to="/reports" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Rapoarte
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {userProfile?.first_name || 'Utilizator'}!</span>
-              <Button variant="outline" onClick={logout}>
-                Deconectare
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

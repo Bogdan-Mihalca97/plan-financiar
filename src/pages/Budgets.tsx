@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PiggyBank, Plus, Target } from "lucide-react";
+import { Plus, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 import AddBudgetForm from "@/components/budgets/AddBudgetForm";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,7 +18,7 @@ interface Budget {
 }
 
 const Budgets = () => {
-  const { userProfile, logout } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +76,7 @@ const Budgets = () => {
     fetchBudgets(); // Refresh the budgets list
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -85,6 +85,10 @@ const Budgets = () => {
         </div>
       </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
   }
 
   if (error) {
@@ -106,42 +110,7 @@ const Budgets = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="flex items-center space-x-2">
-                <PiggyBank className="h-8 w-8 text-indigo-600" />
-                <h1 className="text-2xl font-bold text-gray-900">BugetControl</h1>
-              </Link>
-              <nav className="hidden lg:flex space-x-6">
-                <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Dashboard
-                </Link>
-                <Link to="/transactions" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Tranzacții
-                </Link>
-                <Link to="/budgets" className="text-indigo-600 font-medium">
-                  Buget
-                </Link>
-                <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Obiective
-                </Link>
-                <Link to="/reports" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Rapoarte
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Bună, {userProfile?.first_name || 'Utilizator'}!</span>
-              <Button variant="outline" onClick={logout}>
-                Deconectare
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

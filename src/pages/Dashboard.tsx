@@ -1,18 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { PiggyBank, TrendingUp, TrendingDown, Target, Plus, LogOut } from "lucide-react";
+import { PiggyBank, TrendingUp, TrendingDown, Target, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Link, Navigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 
 const Dashboard = () => {
   const {
-    userProfile,
-    logout,
     isAuthenticated,
     loading,
-    user
+    userProfile
   } = useAuth();
   
   const {
@@ -70,6 +69,7 @@ const Dashboard = () => {
 
   // Tranzacții recente (ultimele 5)
   const recentTransactions = transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ro-RO", {
@@ -78,6 +78,7 @@ const Dashboard = () => {
       year: "numeric"
     });
   };
+  
   const formatAmount = (amount: number, type: "income" | "expense") => {
     const sign = type === "income" ? "+" : "-";
     const color = type === "income" ? "text-green-600" : "text-red-600";
@@ -85,54 +86,10 @@ const Dashboard = () => {
         {sign}{amount} Lei
       </span>;
   };
-  return <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4 lg:space-x-8">
-              <Link to="/dashboard" className="flex items-center space-x-2 flex-shrink-0">
-                <PiggyBank className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-600" />
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">BugetControl</h1>
-              </Link>
-              <nav className="hidden lg:flex space-x-6">
-                <Link to="/dashboard" className="text-indigo-600 font-medium">
-                  Dashboard
-                </Link>
-                <Link to="/transactions" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Tranzacții
-                </Link>
-                <Link to="/budgets" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Buget
-                </Link>
-                <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Obiective
-                </Link>
-                <Link to="/family" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Familie
-                </Link>
-                <Link to="/reports" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Rapoarte
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="text-right hidden sm:block">
-                <div className="text-sm text-gray-700">
-                  Bună, {userProfile?.first_name || 'Utilizator'}!
-                </div>
-                <div className="text-xs text-gray-500">
-                  {user?.email}
-                </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm">
-                <LogOut className="h-4 w-4 mr-1" />
-                Deconectare
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -272,7 +229,8 @@ const Dashboard = () => {
           </Card>
         </div>
       </main>
-    </div>;
+    </div>
+  );
 };
 
 export default Dashboard;
