@@ -1,108 +1,30 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Mail, UserPlus, Settings, LogOut, AlertCircle } from "lucide-react";
 import { useFamily } from "@/contexts/FamilyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import CreateFamilyForm from "@/components/family/CreateFamilyForm";
+import FamilyMembersList from "@/components/family/FamilyMembersList";
+import InviteMemberForm from "@/components/family/InviteMemberForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Settings, LogOut } from "lucide-react";
 
 const Family = () => {
   const { 
     currentFamily, 
-    familyMembers, 
     familyInvitations,
     isCreator,
-    createFamily,
-    inviteMember,
-    acceptInvitation,
-    declineInvitation,
-    removeMember,
     leaveFamily,
     loading
   } = useFamily();
   
-  const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const { toast } = useToast();
-  
-  const [newFamilyName, setNewFamilyName] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-  const [isInviting, setIsInviting] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
-  const handleCreateFamily = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreateError(null);
-    
-    if (!newFamilyName.trim()) {
-      setCreateError("Te rugăm să introduci numele familiei");
-      return;
-    }
-    
-    if (!user) {
-      setCreateError("Nu ești autentificat");
-      return;
-    }
-    
-    setIsCreating(true);
-    try {
-      console.log('Starting family creation with name:', newFamilyName, 'for user:', user.id);
-      await createFamily(newFamilyName.trim());
-      setNewFamilyName("");
-      setCreateError(null);
-      toast({
-        title: "Succes",
-        description: "Familia a fost creată cu succes!",
-      });
-    } catch (error: any) {
-      console.error('Error creating family:', error);
-      const errorMessage = error.message || "A apărut o eroare la crearea familiei";
-      setCreateError(errorMessage);
-      toast({
-        title: "Eroare",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleInviteMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) {
-      toast({
-        title: "Eroare",
-        description: "Te rugăm să introduci o adresă de email",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsInviting(true);
-    try {
-      await inviteMember(inviteEmail);
-      setInviteEmail("");
-      toast({
-        title: "Succes",
-        description: "Invitația a fost trimisă cu succes!",
-      });
-    } catch (error: any) {
-      console.error('Error inviting member:', error);
-      toast({
-        title: "Eroare",
-        description: error.message || "A apărut o eroare la trimiterea invitației",
-        variant: "destructive",
-      });
-    } finally {
-      setIsInviting(false);
+  const handleLeaveFamily = async () => {
+    if (window.confirm("Ești sigur că vrei să părăsești familia? Această acțiune nu poate fi anulată.")) {
+      await leaveFamily();
     }
   };
 
@@ -127,60 +49,8 @@ const Family = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!currentFamily ? (
-          // No family - show create family form
-          <div className="max-w-md mx-auto">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center gap-2">
-                  <UserPlus className="h-6 w-6" />
-                  Creează o Familie
-                </CardTitle>
-                <p className="text-gray-600">
-                  Începe prin a crea un grup de familie pentru a partaja bugetul și obiectivele financiare.
-                </p>
-              </CardHeader>
-              <CardContent>
-                {createError && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{createError}</AlertDescription>
-                  </Alert>
-                )}
-                
-                <form onSubmit={handleCreateFamily} className="space-y-4">
-                  <div>
-                    <Label htmlFor="familyName">Numele Familiei</Label>
-                    <Input
-                      id="familyName"
-                      type="text"
-                      placeholder="ex: Familia Popescu"
-                      value={newFamilyName}
-                      onChange={(e) => {
-                        setNewFamilyName(e.target.value);
-                        setCreateError(null); // Clear error when user starts typing
-                      }}
-                      required
-                      disabled={isCreating}
-                      className={createError ? "border-red-500" : ""}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isCreating}>
-                    {isCreating ? "Se creează..." : "Creează Familia"}
-                  </Button>
-                </form>
-                
-                {user && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      Conectat ca: {user.email}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <CreateFamilyForm />
         ) : (
-          // Has family - show family management
           <div className="space-y-8">
             {/* Family Overview */}
             <div className="bg-white rounded-lg shadow p-6">
@@ -188,7 +58,6 @@ const Family = () => {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{currentFamily.name}</h2>
                   <p className="text-gray-600 mt-1">
-                    {familyMembers.length} membri • 
                     {isCreator ? " Creator" : " Membru"}
                   </p>
                 </div>
@@ -199,7 +68,7 @@ const Family = () => {
                       Creator
                     </Badge>
                   )}
-                  <Button variant="outline" size="sm" onClick={leaveFamily}>
+                  <Button variant="outline" size="sm" onClick={handleLeaveFamily}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Părăsește
                   </Button>
@@ -208,81 +77,10 @@ const Family = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Family Members */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Membri Familie ({familyMembers.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {familyMembers.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">
-                            {member.first_name && member.last_name 
-                              ? `${member.first_name} ${member.last_name}`
-                              : member.email}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {member.email}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={member.is_creator ? 'default' : 'secondary'}>
-                            {member.is_creator ? 'Creator' : 'Membru'}
-                          </Badge>
-                          {isCreator && !member.is_creator && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => removeMember(member.id)}
-                            >
-                              Elimină
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <FamilyMembersList />
 
-              {/* Invite Members & Pending Invitations */}
               <div className="space-y-6">
-                {/* Invite Form */}
-                {isCreator && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Mail className="h-5 w-5" />
-                        Invită Membru Nou
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <form onSubmit={handleInviteMember} className="space-y-4">
-                        <div>
-                          <Label htmlFor="inviteEmail">Email</Label>
-                          <Input
-                            id="inviteEmail"
-                            type="email"
-                            placeholder="adresa@email.com"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                            required
-                            disabled={isInviting}
-                          />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isInviting}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          {isInviting ? "Se trimite..." : "Trimite Invitația"}
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
-                )}
+                <InviteMemberForm />
 
                 {/* Pending Invitations */}
                 {familyInvitations.length > 0 && (
