@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Budgets from './pages/Budgets';
 import Goals from './pages/Goals';
+import Investments from './pages/Investments';
 import Family from "@/pages/Family";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/transactions" element={<Transactions />} />
                 <Route path="/budgets" element={<Budgets />} />
                 <Route path="/goals" element={<Goals />} />
+                <Route path="/investments" element={<Investments />} />
                 <Route path="/family" element={<Family />} />
                 <Route path="/reports" element={<Reports />} />
               </Routes>

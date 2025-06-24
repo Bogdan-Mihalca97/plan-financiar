@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, CreditCard, Target, PieChart, Users, BarChart3, LogOut } from 'lucide-react';
+import { Home, CreditCard, Target, PieChart, Users, BarChart3, LogOut, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -14,6 +14,7 @@ const Navigation = () => {
     { path: '/transactions', label: 'Tranzacții', icon: CreditCard },
     { path: '/budgets', label: 'Bugete', icon: Target },
     { path: '/goals', label: 'Obiective', icon: PieChart },
+    { path: '/investments', label: 'Investiții', icon: TrendingUp },
     { path: '/family', label: 'Familie', icon: Users },
     { path: '/reports', label: 'Rapoarte', icon: BarChart3 },
   ];
