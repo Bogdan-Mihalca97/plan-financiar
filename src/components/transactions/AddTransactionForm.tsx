@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 interface AddTransactionFormProps {
   isOpen: boolean;
@@ -18,26 +19,45 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { addTransaction } = useTransactions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulăm salvarea tranzacției
-    setTimeout(() => {
+    try {
+      await addTransaction({
+        date,
+        description,
+        amount: parseFloat(amount),
+        type,
+        category
+      });
+
       toast({
         title: "Tranzacție Adăugată!",
         description: `${type === "income" ? "Venit" : "Cheltuială"} de ${amount} Lei a fost adăugată.`,
       });
-      setIsLoading(false);
-      onClose();
+
       // Reset form
       setAmount("");
       setDescription("");
       setCategory("");
-    }, 1000);
+      setDate(new Date().toISOString().split('T')[0]);
+      onClose();
+    } catch (error: any) {
+      console.error('Error adding transaction:', error);
+      toast({
+        title: "Eroare",
+        description: error.message || "Nu s-a putut adăuga tranzacția.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const expenseCategories = [
@@ -76,10 +96,22 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
           
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
             <div className="space-y-2">
+              <Label htmlFor="date">Data</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="amount">Suma (Lei)</Label>
               <Input
                 id="amount"
                 type="number"
+                step="0.01"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}

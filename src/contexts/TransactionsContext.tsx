@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Transaction {
   id: string;
@@ -12,14 +14,16 @@ export interface Transaction {
 
 interface TransactionsContextType {
   transactions: Transaction[];
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
-  addTransactions: (transactions: Omit<Transaction, 'id'>[]) => void;
-  updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
-  deleteTransaction: (id: string) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  addTransactions: (transactions: Omit<Transaction, 'id'>[]) => Promise<void>;
+  updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
   getTotalIncome: () => number;
   getTotalExpenses: () => number;
   getBalance: () => number;
   getTransactionsByCategory: () => Record<string, number>;
+  loading: boolean;
+  refreshTransactions: () => Promise<void>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -37,40 +41,108 @@ interface TransactionsProviderProps {
 }
 
 export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ children }) => {
-  // Load transactions from localStorage on component mount
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const savedTransactions = localStorage.getItem('transactions');
-    return savedTransactions ? JSON.parse(savedTransactions) : [];
-  });
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Save transactions to localStorage whenever transactions change
+  const fetchTransactions = async () => {
+    if (!user) {
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [transactions]);
+    fetchTransactions();
+  }, [user]);
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-    };
-    setTransactions(prev => [...prev, newTransaction]);
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    if (!user) throw new Error('User must be authenticated');
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert([{
+        ...transaction,
+        user_id: user.id,
+        amount: Number(transaction.amount)
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    setTransactions(prev => [data, ...prev]);
   };
 
-  const addTransactions = (newTransactions: Omit<Transaction, 'id'>[]) => {
-    const transactionsWithIds = newTransactions.map(transaction => ({
+  const addTransactions = async (newTransactions: Omit<Transaction, 'id'>[]) => {
+    if (!user) throw new Error('User must be authenticated');
+
+    const transactionsWithUserId = newTransactions.map(transaction => ({
       ...transaction,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+      user_id: user.id,
+      amount: Number(transaction.amount)
     }));
-    setTransactions(prev => [...prev, ...transactionsWithIds]);
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert(transactionsWithUserId)
+      .select();
+
+    if (error) throw error;
+
+    setTransactions(prev => [...(data || []), ...prev]);
   };
 
-  const updateTransaction = (id: string, updatedTransaction: Partial<Transaction>) => {
+  const updateTransaction = async (id: string, updatedTransaction: Partial<Transaction>) => {
+    if (!user) throw new Error('User must be authenticated');
+
+    const updateData: any = { ...updatedTransaction };
+    if (updateData.amount !== undefined) {
+      updateData.amount = Number(updateData.amount);
+    }
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
     setTransactions(prev => prev.map(transaction => 
-      transaction.id === id ? { ...transaction, ...updatedTransaction } : transaction
+      transaction.id === id ? data : transaction
     ));
   };
 
-  const deleteTransaction = (id: string) => {
+  const deleteTransaction = async (id: string) => {
+    if (!user) throw new Error('User must be authenticated');
+
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
     setTransactions(prev => prev.filter(transaction => transaction.id !== id));
   };
 
@@ -99,6 +171,10 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
     }, {} as Record<string, number>);
   };
 
+  const refreshTransactions = async () => {
+    await fetchTransactions();
+  };
+
   const value: TransactionsContextType = {
     transactions,
     addTransaction,
@@ -108,7 +184,9 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
     getTotalIncome,
     getTotalExpenses,
     getBalance,
-    getTransactionsByCategory
+    getTransactionsByCategory,
+    loading,
+    refreshTransactions
   };
 
   return (
