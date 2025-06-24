@@ -5,10 +5,18 @@ import { PiggyBank, TrendingUp, TrendingDown, Target, Plus } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Link } from "react-router-dom";
-
 const Dashboard = () => {
-  const { userProfile, logout } = useAuth();
-  const { transactions, getTotalIncome, getTotalExpenses, getBalance, getTransactionsByCategory } = useTransactions();
+  const {
+    userProfile,
+    logout
+  } = useAuth();
+  const {
+    transactions,
+    getTotalIncome,
+    getTotalExpenses,
+    getBalance,
+    getTransactionsByCategory
+  } = useTransactions();
 
   // Calculează statisticile reale
   const totalIncome = getTotalIncome();
@@ -17,42 +25,45 @@ const Dashboard = () => {
   const expensesByCategory = getTransactionsByCategory();
 
   // Calculează rata de economisire
-  const savingsRate = totalIncome > 0 ? ((balance / totalIncome) * 100) : 0;
+  const savingsRate = totalIncome > 0 ? balance / totalIncome * 100 : 0;
 
   // Categoriile pentru bugete (cu valori mock pentru buget, dar cheltuieli reale)
-  const budgetCategories = [
-    { name: "Alimentare", budget: 1000, spent: expensesByCategory["Alimentare"] || 0 },
-    { name: "Transport", budget: 400, spent: expensesByCategory["Transport"] || 0 },
-    { name: "Divertisment", budget: 300, spent: expensesByCategory["Divertisment"] || 0 },
-    { name: "Utilități", budget: 500, spent: expensesByCategory["Utilități"] || 0 },
-  ];
+  const budgetCategories = [{
+    name: "Alimentare",
+    budget: 1000,
+    spent: expensesByCategory["Alimentare"] || 0
+  }, {
+    name: "Transport",
+    budget: 400,
+    spent: expensesByCategory["Transport"] || 0
+  }, {
+    name: "Divertisment",
+    budget: 300,
+    spent: expensesByCategory["Divertisment"] || 0
+  }, {
+    name: "Utilități",
+    budget: 500,
+    spent: expensesByCategory["Utilități"] || 0
+  }];
 
   // Tranzacții recente (ultimele 5)
-  const recentTransactions = transactions
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-
+  const recentTransactions = transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ro-RO", {
       day: "2-digit",
-      month: "2-digit", 
+      month: "2-digit",
       year: "numeric"
     });
   };
-
   const formatAmount = (amount: number, type: "income" | "expense") => {
     const sign = type === "income" ? "+" : "-";
     const color = type === "income" ? "text-green-600" : "text-red-600";
-    return (
-      <span className={`font-medium ${color}`}>
+    return <span className={`font-medium ${color}`}>
         {sign}{amount} Lei
-      </span>
-    );
+      </span>;
   };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -165,41 +176,31 @@ const Dashboard = () => {
           {/* Bugete Overview */}
           <Card>
             <CardHeader>
-              <CardTitle>Bugete pe Categorii</CardTitle>
+              <CardTitle>Buget pe Categorii</CardTitle>
               <CardDescription>Progresul cheltuielilor față de bugetul alocat</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {budgetCategories.length > 0 ? (
-                budgetCategories.map((category) => {
-                  const percentage = category.budget > 0 ? (category.spent / category.budget) * 100 : 0;
-                  const isOverBudget = percentage > 100;
-                  
-                  return (
-                    <div key={category.name} className="space-y-2">
+              {budgetCategories.length > 0 ? budgetCategories.map(category => {
+              const percentage = category.budget > 0 ? category.spent / category.budget * 100 : 0;
+              const isOverBudget = percentage > 100;
+              return <div key={category.name} className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">{category.name}</span>
                         <span className={isOverBudget ? 'text-red-600' : 'text-gray-600'}>
                           {category.spent} / {category.budget} Lei
                         </span>
                       </div>
-                      <Progress 
-                        value={Math.min(percentage, 100)} 
-                        className={`h-2 ${isOverBudget ? 'bg-red-100' : ''}`} 
-                      />
+                      <Progress value={Math.min(percentage, 100)} className={`h-2 ${isOverBudget ? 'bg-red-100' : ''}`} />
                       <div className="text-xs text-right text-gray-500">
                         {percentage.toFixed(1)}% folosit
                       </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-4">
+                    </div>;
+            }) : <div className="text-center py-4">
                   <p className="text-gray-500 mb-2">Nu ai bugete configurate încă</p>
                   <Button asChild size="sm">
                     <Link to="/budgets">Creează primul buget</Link>
                   </Button>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
 
@@ -210,10 +211,8 @@ const Dashboard = () => {
               <CardDescription>Ultimele 5 tranzacții adăugate</CardDescription>
             </CardHeader>
             <CardContent>
-              {recentTransactions.length > 0 ? (
-                <div className="space-y-3">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex justify-between items-center">
+              {recentTransactions.length > 0 ? <div className="space-y-3">
+                  {recentTransactions.map(transaction => <div key={transaction.id} className="flex justify-between items-center">
                       <div>
                         <p className="font-medium">{transaction.description}</p>
                         <p className="text-sm text-gray-500">
@@ -223,16 +222,13 @@ const Dashboard = () => {
                       <div className="text-right">
                         {formatAmount(transaction.amount, transaction.type)}
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                   <div className="pt-3">
                     <Button asChild variant="outline" className="w-full">
                       <Link to="/transactions">Vezi toate tranzacțiile</Link>
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
+                </div> : <div className="text-center py-8">
                   <p className="text-gray-500 mb-4">Nu ai tranzacții încă</p>
                   <Button asChild>
                     <Link to="/transactions">
@@ -240,14 +236,11 @@ const Dashboard = () => {
                       Adaugă prima tranzacție
                     </Link>
                   </Button>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
