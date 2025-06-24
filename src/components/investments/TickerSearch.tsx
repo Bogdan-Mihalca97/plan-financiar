@@ -25,14 +25,15 @@ const TickerSearch = ({ onTickerSelect, value = "", onChange }: TickerSearchProp
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const API_KEY = "M17KPMH7F1305YJ9";
+
   const searchTickers = async () => {
     if (!searchTerm.trim()) return;
 
     setLoading(true);
     try {
-      // Using Alpha Vantage free API for demo - in production, consider paid APIs
       const response = await fetch(
-        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchTerm}&apikey=demo`
+        `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${searchTerm}&apikey=${API_KEY}`
       );
       
       if (!response.ok) throw new Error('Failed to fetch ticker data');
@@ -41,6 +42,10 @@ const TickerSearch = ({ onTickerSelect, value = "", onChange }: TickerSearchProp
       
       if (data['Error Message']) {
         throw new Error('API limit reached. Please try again later.');
+      }
+
+      if (data['Information']) {
+        throw new Error('API key issue. Please check your API key.');
       }
 
       const matches = data['bestMatches'] || [];
@@ -68,7 +73,7 @@ const TickerSearch = ({ onTickerSelect, value = "", onChange }: TickerSearchProp
     try {
       // Fetch current price for selected ticker
       const priceResponse = await fetch(
-        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker.symbol}&apikey=demo`
+        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker.symbol}&apikey=${API_KEY}`
       );
       
       const priceData = await priceResponse.json();

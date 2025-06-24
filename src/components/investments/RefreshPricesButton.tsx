@@ -20,6 +20,8 @@ const RefreshPricesButton = ({ investments, onRefresh }: RefreshPricesButtonProp
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const API_KEY = "M17KPMH7F1305YJ9";
+
   const refreshPrices = async () => {
     setLoading(true);
     
@@ -39,7 +41,7 @@ const RefreshPricesButton = ({ investments, onRefresh }: RefreshPricesButtonProp
       for (const investment of investmentsWithSymbols) {
         try {
           const response = await fetch(
-            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${investment.symbol}&apikey=demo`
+            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${investment.symbol}&apikey=${API_KEY}`
           );
           
           const data = await response.json();
