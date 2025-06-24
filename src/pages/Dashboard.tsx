@@ -5,6 +5,7 @@ import { PiggyBank, TrendingUp, TrendingDown, Target, Plus } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Link } from "react-router-dom";
+
 const Dashboard = () => {
   const {
     userProfile,
@@ -81,7 +82,7 @@ const Dashboard = () => {
                   Tranzacții
                 </Link>
                 <Link to="/budgets" className="text-gray-700 hover:text-indigo-600 font-medium">
-                  Bugete
+                  Buget
                 </Link>
                 <Link to="/goals" className="text-gray-700 hover:text-indigo-600 font-medium">
                   Obiective
@@ -243,4 +244,5 @@ const Dashboard = () => {
       </main>
     </div>;
 };
+
 export default Dashboard;
