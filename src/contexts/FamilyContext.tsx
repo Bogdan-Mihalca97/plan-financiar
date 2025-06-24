@@ -68,30 +68,41 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Loading family data for user:', user.id);
 
-      // Get current user's family membership
+      // Get current user's family membership with improved query
       const { data: membership, error: membershipError } = await supabase
         .from('family_memberships')
         .select(`
-          *,
-          family_groups (*)
+          id,
+          family_group_id,
+          user_id,
+          role,
+          joined_at,
+          family_groups (
+            id,
+            name,
+            created_by,
+            created_at,
+            updated_at
+          )
         `)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (membershipError && membershipError.code !== 'PGRST116') {
+      if (membershipError) {
         console.error('Error loading family membership:', membershipError);
         throw membershipError;
       }
 
       if (membership && membership.family_groups) {
-        setCurrentFamily(membership.family_groups);
+        const familyGroup = membership.family_groups as FamilyGroup;
+        setCurrentFamily(familyGroup);
         setIsAdmin(membership.role === 'admin');
 
         // Load family members
         const { data: members, error: membersError } = await supabase
           .from('family_memberships')
           .select('*')
-          .eq('family_group_id', membership.family_groups.id);
+          .eq('family_group_id', familyGroup.id);
 
         if (membersError) {
           console.error('Error loading family members:', membersError);
@@ -106,7 +117,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               .from('profiles')
               .select('email, first_name, last_name')
               .eq('id', member.user_id)
-              .single();
+              .maybeSingle();
 
             memberProfiles.push({
               ...member,
@@ -124,7 +135,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const { data: invitations, error: invitationsError } = await supabase
             .from('family_invitations')
             .select('*')
-            .eq('family_group_id', membership.family_groups.id)
+            .eq('family_group_id', familyGroup.id)
             .eq('status', 'pending');
 
           if (invitationsError) {
@@ -164,48 +175,62 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user, isAuthenticated]);
 
   const createFamily = async (name: string) => {
+    if (!user || !isAuthenticated) {
+      throw new Error('Nu ești autentificat');
+    }
+
+    console.log('Creating family for user:', user.id, 'with name:', name);
+
     try {
-      if (!user || !isAuthenticated) {
-        throw new Error('Nu ești autentificat');
-      }
-
-      console.log('Creating family for user:', user.id, 'with name:', name);
-
-      // Create family group
+      // Start a transaction-like approach
+      // First create the family group
       const { data: family, error: familyError } = await supabase
         .from('family_groups')
-        .insert([{ name, created_by: user.id }])
+        .insert([{ 
+          name: name.trim(), 
+          created_by: user.id 
+        }])
         .select()
         .single();
 
       if (familyError) {
         console.error('Error creating family group:', familyError);
-        throw familyError;
+        throw new Error(`Eroare la crearea grupului: ${familyError.message}`);
       }
 
-      console.log('Family created:', family);
+      if (!family) {
+        throw new Error('Nu s-a putut crea grupul familiei');
+      }
 
-      // Add creator as admin member
-      const { error: memberError } = await supabase
+      console.log('Family created successfully:', family);
+
+      // Then add creator as admin member
+      const { data: membership, error: memberError } = await supabase
         .from('family_memberships')
         .insert([{
           family_group_id: family.id,
           user_id: user.id,
           role: 'admin'
-        }]);
+        }])
+        .select()
+        .single();
 
       if (memberError) {
         console.error('Error creating admin membership:', memberError);
-        throw memberError;
+        // Try to cleanup the family group if membership creation fails
+        await supabase.from('family_groups').delete().eq('id', family.id);
+        throw new Error(`Eroare la adăugarea ca administrator: ${memberError.message}`);
       }
 
-      console.log('Admin membership created successfully');
+      console.log('Admin membership created successfully:', membership);
 
-      // Reload family data
+      // Reload family data to reflect changes
       await loadFamilyData();
+      
+      return family;
     } catch (error: any) {
       console.error('Error in createFamily:', error);
-      throw new Error(error.message || 'Nu s-a putut crea familia');
+      throw error;
     }
   };
 

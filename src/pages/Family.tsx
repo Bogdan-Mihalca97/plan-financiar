@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Mail, UserPlus, Settings, LogOut } from "lucide-react";
+import { Users, Plus, Mail, UserPlus, Settings, LogOut, AlertCircle } from "lucide-react";
 import { useFamily } from "@/contexts/FamilyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Family = () => {
   const { 
@@ -34,41 +35,39 @@ const Family = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
+    setCreateError(null);
+    
     if (!newFamilyName.trim()) {
-      toast({
-        title: "Eroare",
-        description: "Te rugăm să introduci numele familiei",
-        variant: "destructive",
-      });
+      setCreateError("Te rugăm să introduci numele familiei");
       return;
     }
     
     if (!user) {
-      toast({
-        title: "Eroare",
-        description: "Nu ești autentificat",
-        variant: "destructive",
-      });
+      setCreateError("Nu ești autentificat");
       return;
     }
     
     setIsCreating(true);
     try {
-      console.log('Creating family with name:', newFamilyName, 'for user:', user.id);
-      await createFamily(newFamilyName);
+      console.log('Starting family creation with name:', newFamilyName, 'for user:', user.id);
+      await createFamily(newFamilyName.trim());
       setNewFamilyName("");
+      setCreateError(null);
       toast({
         title: "Succes",
         description: "Familia a fost creată cu succes!",
       });
     } catch (error: any) {
       console.error('Error creating family:', error);
+      const errorMessage = error.message || "A apărut o eroare la crearea familiei";
+      setCreateError(errorMessage);
       toast({
         title: "Eroare",
-        description: error.message || "A apărut o eroare la crearea familiei",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -141,6 +140,13 @@ const Family = () => {
                 </p>
               </CardHeader>
               <CardContent>
+                {createError && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{createError}</AlertDescription>
+                  </Alert>
+                )}
+                
                 <form onSubmit={handleCreateFamily} className="space-y-4">
                   <div>
                     <Label htmlFor="familyName">Numele Familiei</Label>
@@ -149,15 +155,20 @@ const Family = () => {
                       type="text"
                       placeholder="ex: Familia Popescu"
                       value={newFamilyName}
-                      onChange={(e) => setNewFamilyName(e.target.value)}
+                      onChange={(e) => {
+                        setNewFamilyName(e.target.value);
+                        setCreateError(null); // Clear error when user starts typing
+                      }}
                       required
                       disabled={isCreating}
+                      className={createError ? "border-red-500" : ""}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isCreating}>
                     {isCreating ? "Se creează..." : "Creează Familia"}
                   </Button>
                 </form>
+                
                 {user && (
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-700">
