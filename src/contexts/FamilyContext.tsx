@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export interface FamilyGroup {
   id: string;
@@ -17,11 +17,9 @@ export interface FamilyMember {
   user_id: string;
   role: 'admin' | 'member';
   joined_at: string;
-  profile?: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-  };
+  email?: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 export interface FamilyInvitation {
@@ -37,194 +35,327 @@ export interface FamilyInvitation {
 interface FamilyContextType {
   currentFamily: FamilyGroup | null;
   familyMembers: FamilyMember[];
-  pendingInvitations: FamilyInvitation[];
-  userFamilies: FamilyGroup[];
-  createFamilyGroup: (name: string) => Promise<void>;
-  inviteFamilyMember: (email: string) => Promise<void>;
-  switchFamily: (familyId: string) => void;
+  familyInvitations: FamilyInvitation[];
+  isAdmin: boolean;
+  createFamily: (name: string) => Promise<void>;
+  inviteMember: (email: string) => Promise<void>;
+  acceptInvitation: (invitationId: string) => Promise<void>;
+  declineInvitation: (invitationId: string) => Promise<void>;
+  removeMember: (memberId: string) => Promise<void>;
+  leaveFamily: () => Promise<void>;
   loading: boolean;
-  refreshFamilyData: () => Promise<void>;
+  refreshFamily: () => Promise<void>;
 }
 
 const FamilyContext = createContext<FamilyContextType | undefined>(undefined);
 
-export const useFamily = () => {
-  const context = useContext(FamilyContext);
-  if (context === undefined) {
-    throw new Error('useFamily must be used within a FamilyProvider');
-  }
-  return context;
-};
-
-interface FamilyProviderProps {
-  children: ReactNode;
-}
-
-export const FamilyProvider: React.FC<FamilyProviderProps> = ({ children }) => {
-  const { user } = useAuth();
+export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentFamily, setCurrentFamily] = useState<FamilyGroup | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [pendingInvitations, setPendingInvitations] = useState<FamilyInvitation[]>([]);
-  const [userFamilies, setUserFamilies] = useState<FamilyGroup[]>([]);
+  const [familyInvitations, setFamilyInvitations] = useState<FamilyInvitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { toast } = useToast();
 
-  const fetchUserFamilies = async () => {
-    if (!user) return;
-
+  const loadFamilyData = async () => {
     try {
-      // Get all families the user belongs to
-      const { data: memberships, error: membershipsError } = await supabase
-        .from('family_memberships')
-        .select(`
-          family_group_id,
-          role,
-          family_groups (
-            id,
-            name,
-            created_by,
-            created_at,
-            updated_at
-          )
-        `)
-        .eq('user_id', user.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      if (membershipsError) throw membershipsError;
-
-      const families = (memberships || []).map(m => m.family_groups).filter(Boolean) as FamilyGroup[];
-      setUserFamilies(families);
-
-      // Set the first family as current if none is selected
-      if (families.length > 0 && !currentFamily) {
-        setCurrentFamily(families[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching user families:', error);
-    }
-  };
-
-  const fetchFamilyMembers = async (familyId: string) => {
-    try {
-      const { data, error } = await supabase
+      // Get current user's family membership
+      const { data: membership } = await supabase
         .from('family_memberships')
         .select(`
           *,
-          profiles (
-            first_name,
-            last_name,
-            email
-          )
+          family_groups (*)
         `)
-        .eq('family_group_id', familyId);
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) throw error;
+      if (membership && membership.family_groups) {
+        setCurrentFamily(membership.family_groups);
+        setIsAdmin(membership.role === 'admin');
 
-      const members = (data || []).map(member => ({
-        ...member,
-        profile: member.profiles
-      }));
-      setFamilyMembers(members);
+        // Load family members
+        const { data: members } = await supabase
+          .from('family_memberships')
+          .select('*')
+          .eq('family_group_id', membership.family_groups.id);
+
+        if (members) {
+          // Get user profiles for each member
+          const memberProfiles: FamilyMember[] = [];
+          for (const member of members) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, first_name, last_name')
+              .eq('id', member.user_id)
+              .single();
+
+            memberProfiles.push({
+              ...member,
+              role: member.role as 'admin' | 'member',
+              email: profile?.email,
+              first_name: profile?.first_name,
+              last_name: profile?.last_name,
+            });
+          }
+          setFamilyMembers(memberProfiles);
+        }
+
+        // Load pending invitations if user is admin
+        if (membership.role === 'admin') {
+          const { data: invitations } = await supabase
+            .from('family_invitations')
+            .select('*')
+            .eq('family_group_id', membership.family_groups.id)
+            .eq('status', 'pending');
+
+          if (invitations) {
+            setFamilyInvitations(invitations.map(inv => ({
+              ...inv,
+              status: inv.status as 'pending' | 'accepted' | 'declined'
+            })));
+          }
+        }
+      }
     } catch (error) {
-      console.error('Error fetching family members:', error);
+      console.error('Error loading family data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load family data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const fetchPendingInvitations = async (familyId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('family_invitations')
-        .select('*')
-        .eq('family_group_id', familyId)
-        .eq('status', 'pending');
-
-      if (error) throw error;
-
-      setPendingInvitations(data || []);
-    } catch (error) {
-      console.error('Error fetching pending invitations:', error);
-    }
-  };
-
-  const refreshFamilyData = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    await fetchUserFamilies();
-    
-    if (currentFamily) {
-      await Promise.all([
-        fetchFamilyMembers(currentFamily.id),
-        fetchPendingInvitations(currentFamily.id)
-      ]);
-    }
-    setLoading(false);
   };
 
   useEffect(() => {
-    refreshFamilyData();
-  }, [user, currentFamily?.id]);
+    loadFamilyData();
+  }, []);
 
-  const createFamilyGroup = async (name: string) => {
-    if (!user) throw new Error('User must be authenticated');
+  const createFamily = async (name: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
-    const { data: familyGroup, error: familyError } = await supabase
-      .from('family_groups')
-      .insert([{
-        name,
-        created_by: user.id
-      }])
-      .select()
-      .single();
+      // Create family group
+      const { data: family, error: familyError } = await supabase
+        .from('family_groups')
+        .insert([{ name, created_by: user.id }])
+        .select()
+        .single();
 
-    if (familyError) throw familyError;
+      if (familyError) throw familyError;
 
-    // Add the creator as an admin member
-    const { error: membershipError } = await supabase
-      .from('family_memberships')
-      .insert([{
-        family_group_id: familyGroup.id,
-        user_id: user.id,
-        role: 'admin'
-      }]);
+      // Add creator as admin member
+      const { error: memberError } = await supabase
+        .from('family_memberships')
+        .insert([{
+          family_group_id: family.id,
+          user_id: user.id,
+          role: 'admin'
+        }]);
 
-    if (membershipError) throw membershipError;
+      if (memberError) throw memberError;
 
-    await refreshFamilyData();
-    setCurrentFamily(familyGroup);
-  };
+      toast({
+        title: "Success",
+        description: "Family group created successfully",
+      });
 
-  const inviteFamilyMember = async (email: string) => {
-    if (!user || !currentFamily) throw new Error('User and family must be set');
-
-    const { error } = await supabase
-      .from('family_invitations')
-      .insert([{
-        family_group_id: currentFamily.id,
-        email,
-        invited_by: user.id
-      }]);
-
-    if (error) throw error;
-
-    await fetchPendingInvitations(currentFamily.id);
-  };
-
-  const switchFamily = (familyId: string) => {
-    const family = userFamilies.find(f => f.id === familyId);
-    if (family) {
-      setCurrentFamily(family);
+      await loadFamilyData();
+    } catch (error) {
+      console.error('Error creating family:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create family group",
+        variant: "destructive",
+      });
     }
+  };
+
+  const inviteMember = async (email: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !currentFamily) throw new Error('User not authenticated or no family');
+
+      const { error } = await supabase
+        .from('family_invitations')
+        .insert([{
+          family_group_id: currentFamily.id,
+          email,
+          invited_by: user.id,
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Invitation sent successfully",
+      });
+
+      await loadFamilyData();
+    } catch (error) {
+      console.error('Error inviting member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const acceptInvitation = async (invitationId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get invitation details
+      const { data: invitation } = await supabase
+        .from('family_invitations')
+        .select('*')
+        .eq('id', invitationId)
+        .single();
+
+      if (!invitation) throw new Error('Invitation not found');
+
+      // Add user to family
+      const { error: memberError } = await supabase
+        .from('family_memberships')
+        .insert([{
+          family_group_id: invitation.family_group_id,
+          user_id: user.id,
+          role: 'member'
+        }]);
+
+      if (memberError) throw memberError;
+
+      // Update invitation status
+      const { error: inviteError } = await supabase
+        .from('family_invitations')
+        .update({ status: 'accepted' })
+        .eq('id', invitationId);
+
+      if (inviteError) throw inviteError;
+
+      toast({
+        title: "Success",
+        description: "Joined family successfully",
+      });
+
+      await loadFamilyData();
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to accept invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const declineInvitation = async (invitationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('family_invitations')
+        .update({ status: 'declined' })
+        .eq('id', invitationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Invitation declined",
+      });
+
+      await loadFamilyData();
+    } catch (error) {
+      console.error('Error declining invitation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to decline invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('family_memberships')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Member removed successfully",
+      });
+
+      await loadFamilyData();
+    } catch (error) {
+      console.error('Error removing member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove member",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const leaveFamily = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !currentFamily) throw new Error('User not authenticated or no family');
+
+      const { error } = await supabase
+        .from('family_memberships')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('family_group_id', currentFamily.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Left family successfully",
+      });
+
+      setCurrentFamily(null);
+      setFamilyMembers([]);
+      setFamilyInvitations([]);
+      setIsAdmin(false);
+    } catch (error) {
+      console.error('Error leaving family:', error);
+      toast({
+        title: "Error",
+        description: "Failed to leave family",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const refreshFamily = async () => {
+    setLoading(true);
+    await loadFamilyData();
   };
 
   const value: FamilyContextType = {
     currentFamily,
     familyMembers,
-    pendingInvitations,
-    userFamilies,
-    createFamilyGroup,
-    inviteFamilyMember,
-    switchFamily,
+    familyInvitations,
+    isAdmin,
+    createFamily,
+    inviteMember,
+    acceptInvitation,
+    declineInvitation,
+    removeMember,
+    leaveFamily,
     loading,
-    refreshFamilyData
+    refreshFamily,
   };
 
   return (
@@ -232,4 +363,12 @@ export const FamilyProvider: React.FC<FamilyProviderProps> = ({ children }) => {
       {children}
     </FamilyContext.Provider>
   );
+};
+
+export const useFamily = () => {
+  const context = useContext(FamilyContext);
+  if (context === undefined) {
+    throw new Error('useFamily must be used within a FamilyProvider');
+  }
+  return context;
 };
