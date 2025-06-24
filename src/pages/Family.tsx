@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Mail, UserPlus, Settings, LogOut } from "lucide-react";
 import { useFamily } from "@/contexts/FamilyContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Family = () => {
+  const navigate = useNavigate();
   const { 
     currentFamily, 
     familyMembers, 
@@ -80,7 +81,7 @@ const Family = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Bună, {userProfile?.first_name || 'Utilizator'}!</span>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
                 Înapoi la Dashboard
               </Button>
             </div>

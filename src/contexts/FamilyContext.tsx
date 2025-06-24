@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface FamilyGroup {
   id: string;
@@ -56,11 +56,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
 
   const loadFamilyData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || !isAuthenticated) {
+        console.log('User not authenticated, skipping family data load');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Loading family data for user:', user.id);
 
       // Get current user's family membership
       const { data: membership } = await supabase
@@ -132,13 +138,20 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    loadFamilyData();
-  }, []);
+    if (isAuthenticated && user) {
+      loadFamilyData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, isAuthenticated]);
 
   const createFamily = async (name: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !isAuthenticated) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Creating family for user:', user.id);
 
       // Create family group
       const { data: family, error: familyError } = await supabase
@@ -148,6 +161,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .single();
 
       if (familyError) throw familyError;
+
+      console.log('Family created:', family);
 
       // Add creator as admin member
       const { error: memberError } = await supabase
@@ -159,6 +174,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }]);
 
       if (memberError) throw memberError;
+
+      console.log('Admin membership created');
 
       toast({
         title: "Success",
@@ -178,7 +195,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const inviteMember = async (email: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user || !currentFamily) throw new Error('User not authenticated or no family');
 
       const { error } = await supabase
@@ -209,7 +225,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const acceptInvitation = async (invitationId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Get invitation details
@@ -308,7 +323,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const leaveFamily = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user || !currentFamily) throw new Error('User not authenticated or no family');
 
       const { error } = await supabase
