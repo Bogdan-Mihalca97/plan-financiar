@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Target, PiggyBank, Trophy, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTransactions } from "@/contexts/TransactionsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -35,6 +35,7 @@ interface Goal {
 
 const BudgetsAndGoals = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { getTransactionsByCategory } = useTransactions();
   const [showAddBudgetForm, setShowAddBudgetForm] = useState(false);
   const [showAddGoalForm, setShowAddGoalForm] = useState(false);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -42,6 +43,9 @@ const BudgetsAndGoals = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Get real expense data from transactions
+  const expensesByCategory = getTransactionsByCategory();
 
   const fetchBudgets = async () => {
     try {
@@ -111,6 +115,12 @@ const BudgetsAndGoals = () => {
   }, []);
 
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.limit_amount, 0);
+  const totalSpent = budgets.reduce((sum, budget) => {
+    const spent = expensesByCategory[budget.category] || 0;
+    return sum + spent;
+  }, 0);
+  const totalRemaining = totalBudget - totalSpent;
+
   const totalTargetAmount = goals.reduce((sum, goal) => sum + goal.target_amount, 0);
   const totalCurrentAmount = goals.reduce((sum, goal) => sum + goal.current_amount, 0);
   const completedGoals = goals.filter(goal => goal.is_completed).length;
@@ -204,8 +214,10 @@ const BudgetsAndGoals = () => {
                   <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0 Lei</div>
-                  <p className="text-xs text-muted-foreground">Nu ai cheltuieli înregistrate</p>
+                  <div className="text-2xl font-bold">{totalSpent.toFixed(2)} Lei</div>
+                  <p className="text-xs text-muted-foreground">
+                    {totalSpent > 0 ? 'Din bugetele tale' : 'Nu ai cheltuieli înregistrate'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -215,8 +227,12 @@ const BudgetsAndGoals = () => {
                   <PiggyBank className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalBudget.toFixed(2)} Lei</div>
-                  <p className="text-xs text-muted-foreground">Din bugetele tale</p>
+                  <div className={`text-2xl font-bold ${totalRemaining < 0 ? 'text-red-600' : ''}`}>
+                    {totalRemaining.toFixed(2)} Lei
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {totalRemaining < 0 ? 'Buget depășit!' : 'Din bugetele tale'}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -224,36 +240,63 @@ const BudgetsAndGoals = () => {
             {/* Budgets List */}
             {budgets.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {budgets.map((budget) => (
-                  <Card key={budget.id}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>{budget.category}</span>
-                        <span className="text-sm font-normal text-gray-500">
-                          {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Limită:</span>
-                          <span className="font-semibold">{budget.limit_amount.toFixed(2)} Lei</span>
+                {budgets.map((budget) => {
+                  const spent = expensesByCategory[budget.category] || 0;
+                  const percentage = budget.limit_amount > 0 ? (spent / budget.limit_amount) * 100 : 0;
+                  const isOverBudget = percentage > 100;
+                  const remaining = budget.limit_amount - spent;
+                  
+                  return (
+                    <Card key={budget.id} className={isOverBudget ? 'border-red-200 bg-red-50' : ''}>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>{budget.category}</span>
+                          <span className="text-sm font-normal text-gray-500">
+                            {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Limită:</span>
+                            <span className="font-semibold">{budget.limit_amount.toFixed(2)} Lei</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Cheltuit:</span>
+                            <span className={`font-semibold ${isOverBudget ? 'text-red-600' : ''}`}>
+                              {spent.toFixed(2)} Lei
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Rămas:</span>
+                            <span className={`font-semibold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {remaining.toFixed(2)} Lei
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all ${
+                                isOverBudget ? 'bg-red-500' : 
+                                percentage >= 75 ? 'bg-yellow-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            />
+                          </div>
+                          {isOverBudget && (
+                            <div className="bg-red-100 border border-red-200 rounded p-1">
+                              <div className="h-1 bg-red-500 rounded-full" style={{ width: `${Math.min(percentage - 100, 100)}%` }} />
+                            </div>
+                          )}
+                          <p className={`text-xs text-center ${isOverBudget ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                            {percentage.toFixed(1)}% din buget folosit
+                            {isOverBudget && ' (Depășit!)'}
+                          </p>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Cheltuit:</span>
-                          <span className="font-semibold">0 Lei</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }}></div>
-                        </div>
-                        <p className="text-xs text-gray-500 text-center">
-                          0% din buget folosit
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             ) : (
               <Card>

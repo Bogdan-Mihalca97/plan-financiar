@@ -75,7 +75,7 @@ const BudgetOverview = ({ expensesByCategory }: BudgetOverviewProps) => {
         {budgets.length > 0 ? (
           budgets.map(budget => {
             const spent = expensesByCategory[budget.category] || 0;
-            const percentage = budget.limit_amount > 0 ? spent / budget.limit_amount * 100 : 0;
+            const percentage = budget.limit_amount > 0 ? (spent / budget.limit_amount) * 100 : 0;
             const isOverBudget = percentage > 100;
             
             return (
@@ -90,9 +90,17 @@ const BudgetOverview = ({ expensesByCategory }: BudgetOverviewProps) => {
                   value={Math.min(percentage, 100)} 
                   className={`h-2 ${isOverBudget ? 'bg-red-100' : ''}`} 
                 />
+                {isOverBudget && (
+                  <div className="bg-red-50 border border-red-200 rounded p-2">
+                    <div className="flex items-center">
+                      <div className="h-2 bg-red-500 rounded-full flex-1" />
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs">
-                  <span className={`${isOverBudget ? 'text-red-600' : 'text-gray-500'}`}>
+                  <span className={`${isOverBudget ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
                     {percentage.toFixed(1)}% folosit
+                    {isOverBudget && ' (Depășit!)'}
                   </span>
                   <span className="text-gray-500">
                     {budget.period === 'monthly' ? 'Lunar' : 'Anual'}

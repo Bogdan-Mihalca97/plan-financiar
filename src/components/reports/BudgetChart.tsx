@@ -1,14 +1,16 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { useTransactions } from "@/contexts/TransactionsContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const data = [
-  { category: "Alimentare", buget: 1000, cheltuit: 650 },
-  { category: "Transport", buget: 400, cheltuit: 320 },
-  { category: "Divertisment", buget: 300, cheltuit: 380 },
-  { category: "Utilități", buget: 500, cheltuit: 450 },
-  { category: "Sănătate", buget: 200, cheltuit: 150 },
-];
+interface Budget {
+  id: string;
+  category: string;
+  limit_amount: number;
+  period: string;
+}
 
 const chartConfig = {
   buget: {
@@ -22,16 +24,46 @@ const chartConfig = {
 };
 
 const BudgetChart = () => {
+  const { getTransactionsByCategory } = useTransactions();
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const expensesByCategory = getTransactionsByCategory();
+
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('budgets')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setBudgets(data || []);
+      } catch (error) {
+        console.error('Error fetching budgets:', error);
+      }
+    };
+
+    fetchBudgets();
+  }, []);
+
+  const chartData = budgets.map(budget => ({
+    category: budget.category,
+    buget: budget.limit_amount,
+    cheltuit: expensesByCategory[budget.category] || 0
+  }));
+
   return (
     <ChartContainer config={chartConfig} className="h-[300px]">
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="category" />
-        <YAxis />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="buget" fill="var(--color-buget)" />
-        <Bar dataKey="cheltuit" fill="var(--color-cheltuit)" />
-      </BarChart>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="category" />
+          <YAxis />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Bar dataKey="buget" fill="var(--color-buget)" />
+          <Bar dataKey="cheltuit" fill="var(--color-cheltuit)" />
+        </BarChart>
+      </ResponsiveContainer>
     </ChartContainer>
   );
 };
