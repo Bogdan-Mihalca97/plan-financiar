@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -59,24 +58,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
 
-  // Add retry logic for network requests
-  const retryRequest = async (operation: () => Promise<any>, maxRetries = 3) => {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error: any) {
-        console.error(`Attempt ${attempt} failed:`, error);
-        
-        if (attempt === maxRetries) {
-          throw error;
-        }
-        
-        // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-      }
-    }
-  };
-
   const loadFamilyData = async () => {
     try {
       if (!user || !isAuthenticated) {
@@ -87,23 +68,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Loading family data for user:', user.id);
 
-      // Test Supabase connection first
-      const { error: connectionError } = await supabase.from('profiles').select('id').limit(1);
-      if (connectionError) {
-        console.error('Supabase connection test failed:', connectionError);
-        throw new Error('Problemă de conectare cu baza de date');
-      }
-
-      // Get current user's family membership with retry logic
-      const membershipResult = await retryRequest(async () => {
-        return await supabase
-          .from('family_memberships')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-      });
-
-      const { data: membership, error: membershipError } = membershipResult;
+      // Get current user's family membership
+      const { data: membership, error: membershipError } = await supabase
+        .from('family_memberships')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (membershipError) {
         console.error('Error loading family membership:', membershipError);
@@ -111,16 +81,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       if (membership) {
-        // Get the family group details with retry
-        const familyResult = await retryRequest(async () => {
-          return await supabase
-            .from('family_groups')
-            .select('*')
-            .eq('id', membership.family_group_id)
-            .single();
-        });
-
-        const { data: familyGroup, error: familyError } = familyResult;
+        // Get the family group details
+        const { data: familyGroup, error: familyError } = await supabase
+          .from('family_groups')
+          .select('*')
+          .eq('id', membership.family_group_id)
+          .single();
 
         if (familyError) {
           console.error('Error loading family group:', familyError);
@@ -131,77 +97,57 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsCreator(familyGroup.created_by === user.id);
 
         // Load all family members
-        try {
-          const membersResult = await retryRequest(async () => {
-            return await supabase
-              .from('family_memberships')
-              .select('*')
-              .eq('family_group_id', familyGroup.id);
-          });
+        const { data: members, error: membersError } = await supabase
+          .from('family_memberships')
+          .select('*')
+          .eq('family_group_id', familyGroup.id);
 
-          const { data: members, error: membersError } = membersResult;
+        if (membersError) {
+          console.error('Error loading family members:', membersError);
+        } else if (members) {
+          // Get user profiles for each member
+          const memberProfiles: FamilyMember[] = [];
+          for (const member of members) {
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('email, first_name, last_name')
+                .eq('id', member.user_id)
+                .maybeSingle();
 
-          if (membersError) {
-            console.error('Error loading family members:', membersError);
-            setFamilyMembers([]);
-          } else if (members) {
-            // Get user profiles for each member
-            const memberProfiles: FamilyMember[] = [];
-            for (const member of members) {
-              try {
-                const { data: profile } = await supabase
-                  .from('profiles')
-                  .select('email, first_name, last_name')
-                  .eq('id', member.user_id)
-                  .maybeSingle();
-
-                memberProfiles.push({
-                  ...member,
-                  email: profile?.email,
-                  first_name: profile?.first_name,
-                  last_name: profile?.last_name,
-                  is_creator: familyGroup.created_by === member.user_id,
-                });
-              } catch (profileError) {
-                console.error('Error loading profile for user:', member.user_id, profileError);
-                // Add member without profile info
-                memberProfiles.push({
-                  ...member,
-                  is_creator: familyGroup.created_by === member.user_id,
-                });
-              }
+              memberProfiles.push({
+                ...member,
+                email: profile?.email,
+                first_name: profile?.first_name,
+                last_name: profile?.last_name,
+                is_creator: familyGroup.created_by === member.user_id,
+              });
+            } catch (profileError) {
+              console.error('Error loading profile for user:', member.user_id, profileError);
+              memberProfiles.push({
+                ...member,
+                is_creator: familyGroup.created_by === member.user_id,
+              });
             }
-            setFamilyMembers(memberProfiles);
           }
-        } catch (error) {
-          console.error('Error in members loading:', error);
-          setFamilyMembers([]);
+          setFamilyMembers(memberProfiles);
         }
 
         // Load pending invitations if user is the creator
         if (familyGroup.created_by === user.id) {
-          try {
-            const invitationsResult = await retryRequest(async () => {
-              return await supabase
-                .from('family_invitations')
-                .select('*')
-                .eq('family_group_id', familyGroup.id)
-                .eq('status', 'pending');
-            });
+          const { data: invitations, error: invitationsError } = await supabase
+            .from('family_invitations')
+            .select('*')
+            .eq('family_group_id', familyGroup.id)
+            .eq('status', 'pending');
 
-            const { data: invitations, error: invitationsError } = invitationsResult;
-
-            if (invitationsError) {
-              console.error('Error loading invitations:', invitationsError);
-            } else if (invitations) {
-              setFamilyInvitations(invitations.map(inv => ({
-                ...inv,
-                status: inv.status as 'pending' | 'accepted' | 'declined'
-              })));
-            }
-          } catch (error) {
-            console.error('Error loading invitations:', error);
-            setFamilyInvitations([]);
+          if (invitationsError) {
+            console.error('Error loading invitations:', invitationsError);
+          } else if (invitations) {
+            setFamilyInvitations(invitations.map(inv => ({
+              ...inv,
+              status: inv.status as 'pending' | 'accepted' | 'declined'
+            })));
           }
         }
       } else {
@@ -214,12 +160,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error: any) {
       console.error('Error loading family data:', error);
       
-      // Show user-friendly error message
       let errorMessage = 'Nu s-au putut încărca datele familiei';
-      if (error.message?.includes('Failed to fetch')) {
+      if (error.message?.includes('infinite recursion')) {
+        errorMessage = 'Problemă cu configurarea bazei de date. Te rugăm să contactezi suportul.';
+      } else if (error.message?.includes('Failed to fetch')) {
         errorMessage = 'Problemă de conectare. Te rugăm să reîncerci în câteva momente.';
-      } else if (error.message?.includes('conectare')) {
-        errorMessage = error.message;
       }
       
       toast({
@@ -248,28 +193,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     console.log('Creating family for user:', user.id, 'with name:', name);
 
     try {
-      // Test connection before creating
-      const { error: connectionError } = await supabase.from('profiles').select('id').limit(1);
-      if (connectionError) {
-        throw new Error('Problemă de conectare cu baza de date');
-      }
-
-      // Create the family group with retry logic
-      const familyResult = await retryRequest(async () => {
-        return await supabase
-          .from('family_groups')
-          .insert([{ 
-            name: name.trim(), 
-            created_by: user.id 
-          }])
-          .select()
-          .single();
-      });
-
-      const { data: family, error: familyError } = familyResult;
+      // Create the family group
+      const { data: family, error: familyError } = await supabase
+        .from('family_groups')
+        .insert([{ 
+          name: name.trim(), 
+          created_by: user.id 
+        }])
+        .select()
+        .single();
 
       if (familyError) {
         console.error('Error creating family group:', familyError);
+        
+        if (familyError.message?.includes('infinite recursion')) {
+          throw new Error('Problemă cu configurarea bazei de date. Te rugăm să contactezi suportul.');
+        }
+        
         throw new Error(`Eroare la crearea grupului: ${familyError.message}`);
       }
 
@@ -279,28 +219,30 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Family created successfully:', family);
 
-      // Add creator as member with retry logic
-      const membershipResult = await retryRequest(async () => {
-        return await supabase
-          .from('family_memberships')
-          .insert([{
-            family_group_id: family.id,
-            user_id: user.id
-          }])
-          .select()
-          .single();
-      });
-
-      const { data: membership, error: memberError } = membershipResult;
+      // Add creator as member
+      const { data: membership, error: memberError } = await supabase
+        .from('family_memberships')
+        .insert([{
+          family_group_id: family.id,
+          user_id: user.id
+        }])
+        .select()
+        .single();
 
       if (memberError) {
         console.error('Error creating membership:', memberError);
+        
         // Try to cleanup the family group if membership creation fails
         try {
           await supabase.from('family_groups').delete().eq('id', family.id);
         } catch (cleanupError) {
           console.error('Error cleaning up family group:', cleanupError);
         }
+        
+        if (memberError.message?.includes('infinite recursion')) {
+          throw new Error('Problemă cu configurarea bazei de date. Te rugăm să contactezi suportul.');
+        }
+        
         throw new Error(`Eroare la adăugarea ca membru: ${memberError.message}`);
       }
 
@@ -313,7 +255,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error: any) {
       console.error('Error in createFamily:', error);
       
-      // Handle specific error types
       if (error.message?.includes('Failed to fetch')) {
         throw new Error('Problemă de conectare. Te rugăm să reîncerci în câteva momente.');
       }
@@ -356,7 +297,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       if (!user) throw new Error('User not authenticated');
 
-      // Get invitation details
       const { data: invitation } = await supabase
         .from('family_invitations')
         .select('*')
@@ -365,7 +305,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!invitation) throw new Error('Invitation not found');
 
-      // Add user to family
       const { error: memberError } = await supabase
         .from('family_memberships')
         .insert([{
@@ -375,7 +314,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (memberError) throw memberError;
 
-      // Update invitation status
       const { error: inviteError } = await supabase
         .from('family_invitations')
         .update({ status: 'accepted' })
