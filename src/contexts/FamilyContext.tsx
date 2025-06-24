@@ -60,13 +60,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user, isAuthenticated } = useAuth();
 
   const loadFamilyData = async () => {
-    try {
-      if (!user || !isAuthenticated) {
-        console.log('User not authenticated, skipping family data load');
-        setLoading(false);
-        return;
-      }
+    if (!user || !isAuthenticated) {
+      console.log('User not authenticated, skipping family data load');
+      setLoading(false);
+      return;
+    }
 
+    try {
       console.log('Loading family data for user:', user.id);
 
       // First get user's own membership
@@ -97,7 +97,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentFamily(familyGroup);
         setIsCreator(familyGroup.created_by === user.id);
 
-        // Load all family members for this group
+        // Load all family members for this group - we'll get all memberships and then fetch profiles
         const { data: allMemberships, error: membersError } = await supabase
           .from('family_memberships')
           .select('*')
