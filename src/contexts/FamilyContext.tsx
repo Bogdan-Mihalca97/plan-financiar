@@ -69,7 +69,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('Loading family data for user:', user.id);
 
       // Get current user's family membership
-      const { data: membership } = await supabase
+      const { data: membership, error: membershipError } = await supabase
         .from('family_memberships')
         .select(`
           *,
@@ -78,15 +78,25 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .eq('user_id', user.id)
         .single();
 
+      if (membershipError && membershipError.code !== 'PGRST116') {
+        console.error('Error loading family membership:', membershipError);
+        throw membershipError;
+      }
+
       if (membership && membership.family_groups) {
         setCurrentFamily(membership.family_groups);
         setIsAdmin(membership.role === 'admin');
 
         // Load family members
-        const { data: members } = await supabase
+        const { data: members, error: membersError } = await supabase
           .from('family_memberships')
           .select('*')
           .eq('family_group_id', membership.family_groups.id);
+
+        if (membersError) {
+          console.error('Error loading family members:', membersError);
+          throw membersError;
+        }
 
         if (members) {
           // Get user profiles for each member
@@ -111,25 +121,33 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         // Load pending invitations if user is admin
         if (membership.role === 'admin') {
-          const { data: invitations } = await supabase
+          const { data: invitations, error: invitationsError } = await supabase
             .from('family_invitations')
             .select('*')
             .eq('family_group_id', membership.family_groups.id)
             .eq('status', 'pending');
 
-          if (invitations) {
+          if (invitationsError) {
+            console.error('Error loading invitations:', invitationsError);
+          } else if (invitations) {
             setFamilyInvitations(invitations.map(inv => ({
               ...inv,
               status: inv.status as 'pending' | 'accepted' | 'declined'
             })));
           }
         }
+      } else {
+        // No family membership found
+        setCurrentFamily(null);
+        setFamilyMembers([]);
+        setFamilyInvitations([]);
+        setIsAdmin(false);
       }
     } catch (error) {
       console.error('Error loading family data:', error);
       toast({
-        title: "Error",
-        description: "Failed to load family data",
+        title: "Eroare",
+        description: "Nu s-au putut încărca datele familiei",
         variant: "destructive",
       });
     } finally {
@@ -148,10 +166,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const createFamily = async (name: string) => {
     try {
       if (!user || !isAuthenticated) {
-        throw new Error('User not authenticated');
+        throw new Error('Nu ești autentificat');
       }
 
-      console.log('Creating family for user:', user.id);
+      console.log('Creating family for user:', user.id, 'with name:', name);
 
       // Create family group
       const { data: family, error: familyError } = await supabase
@@ -160,7 +178,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .select()
         .single();
 
-      if (familyError) throw familyError;
+      if (familyError) {
+        console.error('Error creating family group:', familyError);
+        throw familyError;
+      }
 
       console.log('Family created:', family);
 
@@ -173,23 +194,18 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           role: 'admin'
         }]);
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error creating admin membership:', memberError);
+        throw memberError;
+      }
 
-      console.log('Admin membership created');
+      console.log('Admin membership created successfully');
 
-      toast({
-        title: "Success",
-        description: "Family group created successfully",
-      });
-
+      // Reload family data
       await loadFamilyData();
-    } catch (error) {
-      console.error('Error creating family:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create family group",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error('Error in createFamily:', error);
+      throw new Error(error.message || 'Nu s-a putut crea familia');
     }
   };
 

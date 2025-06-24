@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useFamily } from "@/contexts/FamilyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const Family = () => {
   const { 
@@ -25,7 +27,8 @@ const Family = () => {
     loading
   } = useFamily();
   
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { toast } = useToast();
   
   const [newFamilyName, setNewFamilyName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -34,12 +37,40 @@ const Family = () => {
 
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFamilyName.trim()) return;
+    if (!newFamilyName.trim()) {
+      toast({
+        title: "Eroare",
+        description: "Te rugăm să introduci numele familiei",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!user) {
+      toast({
+        title: "Eroare",
+        description: "Nu ești autentificat",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsCreating(true);
     try {
+      console.log('Creating family with name:', newFamilyName, 'for user:', user.id);
       await createFamily(newFamilyName);
       setNewFamilyName("");
+      toast({
+        title: "Succes",
+        description: "Familia a fost creată cu succes!",
+      });
+    } catch (error: any) {
+      console.error('Error creating family:', error);
+      toast({
+        title: "Eroare",
+        description: error.message || "A apărut o eroare la crearea familiei",
+        variant: "destructive",
+      });
     } finally {
       setIsCreating(false);
     }
@@ -47,12 +78,30 @@ const Family = () => {
 
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    if (!inviteEmail.trim()) {
+      toast({
+        title: "Eroare",
+        description: "Te rugăm să introduci o adresă de email",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsInviting(true);
     try {
       await inviteMember(inviteEmail);
       setInviteEmail("");
+      toast({
+        title: "Succes",
+        description: "Invitația a fost trimisă cu succes!",
+      });
+    } catch (error: any) {
+      console.error('Error inviting member:', error);
+      toast({
+        title: "Eroare",
+        description: error.message || "A apărut o eroare la trimiterea invitației",
+        variant: "destructive",
+      });
     } finally {
       setIsInviting(false);
     }
@@ -102,12 +151,20 @@ const Family = () => {
                       value={newFamilyName}
                       onChange={(e) => setNewFamilyName(e.target.value)}
                       required
+                      disabled={isCreating}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isCreating}>
                     {isCreating ? "Se creează..." : "Creează Familia"}
                   </Button>
                 </form>
+                {user && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      Conectat ca: {user.email}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -204,6 +261,7 @@ const Family = () => {
                             value={inviteEmail}
                             onChange={(e) => setInviteEmail(e.target.value)}
                             required
+                            disabled={isInviting}
                           />
                         </div>
                         <Button type="submit" className="w-full" disabled={isInviting}>
