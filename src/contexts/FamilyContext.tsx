@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -68,7 +69,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Loading family data for user:', user.id);
 
-      // Get current user's family membership
+      // First get user's own membership
       const { data: membership, error: membershipError } = await supabase
         .from('family_memberships')
         .select('*')
@@ -96,18 +97,18 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentFamily(familyGroup);
         setIsCreator(familyGroup.created_by === user.id);
 
-        // Load all family members
-        const { data: members, error: membersError } = await supabase
+        // Load all family members for this group
+        const { data: allMemberships, error: membersError } = await supabase
           .from('family_memberships')
           .select('*')
           .eq('family_group_id', familyGroup.id);
 
         if (membersError) {
           console.error('Error loading family members:', membersError);
-        } else if (members) {
+        } else if (allMemberships) {
           // Get user profiles for each member
           const memberProfiles: FamilyMember[] = [];
-          for (const member of members) {
+          for (const member of allMemberships) {
             try {
               const { data: profile } = await supabase
                 .from('profiles')
@@ -159,17 +160,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     } catch (error: any) {
       console.error('Error loading family data:', error);
-      
-      let errorMessage = 'Nu s-au putut încărca datele familiei';
-      if (error.message?.includes('infinite recursion')) {
-        errorMessage = 'Problemă cu configurarea bazei de date. Te rugăm să contactezi suportul.';
-      } else if (error.message?.includes('Failed to fetch')) {
-        errorMessage = 'Problemă de conectare. Te rugăm să reîncerci în câteva momente.';
-      }
-      
       toast({
         title: "Eroare",
-        description: errorMessage,
+        description: "Nu s-au putut încărca datele familiei",
         variant: "destructive",
       });
     } finally {
@@ -205,11 +198,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (familyError) {
         console.error('Error creating family group:', familyError);
-        
-        if (familyError.message?.includes('infinite recursion')) {
-          throw new Error('Problemă cu configurarea bazei de date. Te rugăm să contactezi suportul.');
-        }
-        
         throw new Error(`Eroare la crearea grupului: ${familyError.message}`);
       }
 
@@ -237,10 +225,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await supabase.from('family_groups').delete().eq('id', family.id);
         } catch (cleanupError) {
           console.error('Error cleaning up family group:', cleanupError);
-        }
-        
-        if (memberError.message?.includes('infinite recursion')) {
-          throw new Error('Problemă cu configurarea bazei de date. Te rugăm să contactezi suportul.');
         }
         
         throw new Error(`Eroare la adăugarea ca membru: ${memberError.message}`);
@@ -305,21 +289,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!invitation) throw new Error('Invitation not found');
 
-      const { error: memberError } = await supabase
+      await supabase
         .from('family_memberships')
         .insert([{
           family_group_id: invitation.family_group_id,
           user_id: user.id
         }]);
 
-      if (memberError) throw memberError;
-
-      const { error: inviteError } = await supabase
+      await supabase
         .from('family_invitations')
         .update({ status: 'accepted' })
         .eq('id', invitationId);
-
-      if (inviteError) throw inviteError;
 
       toast({
         title: "Succes",
@@ -339,12 +319,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const declineInvitation = async (invitationId: string) => {
     try {
-      const { error } = await supabase
+      await supabase
         .from('family_invitations')
         .update({ status: 'declined' })
         .eq('id', invitationId);
-
-      if (error) throw error;
 
       toast({
         title: "Succes",
@@ -368,12 +346,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw new Error('Doar creatorul familiei poate elimina membri');
       }
 
-      const { error } = await supabase
+      await supabase
         .from('family_memberships')
         .delete()
         .eq('id', memberId);
-
-      if (error) throw error;
 
       toast({
         title: "Succes",
@@ -395,13 +371,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       if (!user || !currentFamily) throw new Error('User not authenticated or no family');
 
-      const { error } = await supabase
+      await supabase
         .from('family_memberships')
         .delete()
         .eq('user_id', user.id)
         .eq('family_group_id', currentFamily.id);
-
-      if (error) throw error;
 
       toast({
         title: "Succes",
