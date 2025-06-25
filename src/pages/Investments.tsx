@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingUp, TrendingDown, DollarSign, Target } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, Target, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
@@ -9,6 +9,16 @@ import Navigation from "@/components/Navigation";
 import AddInvestmentForm from "@/components/investments/AddInvestmentForm";
 import RefreshPricesButton from "@/components/investments/RefreshPricesButton";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Investment {
   id: string;
@@ -27,6 +37,9 @@ const Investments = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [investmentToDelete, setInvestmentToDelete] = useState<Investment | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   const fetchInvestments = async () => {
@@ -53,6 +66,44 @@ const Investments = () => {
   useEffect(() => {
     fetchInvestments();
   }, []);
+
+  const handleDeleteClick = (investment: Investment) => {
+    setInvestmentToDelete(investment);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!investmentToDelete) return;
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('investments')
+        .delete()
+        .eq('id', investmentToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Investiție ștearsă!",
+        description: `${investmentToDelete.name} a fost ștearsă cu succes.`,
+      });
+
+      // Remove the investment from the local state
+      setInvestments(prev => prev.filter(inv => inv.id !== investmentToDelete.id));
+    } catch (error: any) {
+      console.error('Error deleting investment:', error);
+      toast({
+        title: "Eroare",
+        description: error.message || "A apărut o eroare la ștergerea investiției.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setInvestmentToDelete(null);
+    }
+  };
 
   const totalInvested = investments.reduce((sum, inv) => sum + (inv.purchase_price * inv.quantity), 0);
   const currentValue = investments.reduce((sum, inv) => sum + (inv.current_price * inv.quantity), 0);
@@ -177,11 +228,21 @@ const Investments = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span className="truncate">{investment.name}</span>
-                      {investment.symbol && (
-                        <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          {investment.symbol}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {investment.symbol && (
+                          <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {investment.symbol}
+                          </span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(investment)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardTitle>
                     <CardDescription>{investment.type}</CardDescription>
                   </CardHeader>
@@ -248,6 +309,29 @@ const Investments = () => {
             handleInvestmentAdded();
           }} 
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Șterge Investiția</AlertDialogTitle>
+              <AlertDialogDescription>
+                Ești sigur că vrei să ștergi investiția "{investmentToDelete?.name}"? 
+                Această acțiune nu poate fi anulată.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Anulează</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {deleting ? "Se șterge..." : "Șterge"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
