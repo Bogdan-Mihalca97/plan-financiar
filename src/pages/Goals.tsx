@@ -1,14 +1,24 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PiggyBank, Plus, Target, Trophy, DollarSign } from "lucide-react";
+import { PiggyBank, Plus, Target, Trophy, DollarSign, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AddGoalForm from "@/components/goals/AddGoalForm";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Goal {
   id: string;
@@ -51,6 +61,30 @@ const Goals = () => {
     }
   };
 
+  const deleteGoal = async (goalId: string) => {
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .delete()
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      setGoals(prev => prev.filter(goal => goal.id !== goalId));
+      toast({
+        title: "Obiectiv șters",
+        description: "Obiectivul a fost șters cu succes.",
+      });
+    } catch (error: any) {
+      console.error('Error deleting goal:', error);
+      toast({
+        title: "Eroare la ștergerea obiectivului",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     fetchGoals();
   }, []);
@@ -83,9 +117,7 @@ const Goals = () => {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Obiective Financiare</h2>
@@ -153,13 +185,36 @@ const Goals = () => {
               
               return (
                 <Card key={goal.id} className={isCompleted ? 'border-green-200 bg-green-50' : ''}>
-                  {isCompleted && (
-                    <div className="flex justify-end p-2">
-                      <Trophy className="h-5 w-5 text-green-600" />
-                    </div>
-                  )}
+                  <div className="flex justify-between items-start p-2">
+                    {isCompleted && <Trophy className="h-5 w-5 text-green-600" />}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Șterge Obiectivul</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Ești sigur că vrei să ștergi obiectivul "{goal.title}"? 
+                            Această acțiune nu poate fi anulată.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Anulează</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteGoal(goal.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Șterge
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                   
-                  <CardHeader>
+                  <CardHeader className="pt-0">
                     <CardTitle className="flex items-center justify-between">
                       <span className="truncate">{goal.title}</span>
                     </CardTitle>

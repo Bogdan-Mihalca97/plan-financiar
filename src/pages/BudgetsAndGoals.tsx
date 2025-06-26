@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Target, PiggyBank, Trophy, DollarSign } from "lucide-react";
+import { Plus, Target, PiggyBank, Trophy, DollarSign, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,17 @@ import Navigation from "@/components/Navigation";
 import AddBudgetForm from "@/components/budgets/AddBudgetForm";
 import AddGoalForm from "@/components/goals/AddGoalForm";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Budget {
   id: string;
@@ -44,8 +55,8 @@ const BudgetsAndGoals = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Get real expense data from transactions
-  const expensesByCategory = getTransactionsByCategory();
+  // Get monthly expense data from transactions
+  const monthlyExpensesByCategory = getTransactionsByCategory();
 
   const fetchBudgets = async () => {
     try {
@@ -104,6 +115,54 @@ const BudgetsAndGoals = () => {
     }
   };
 
+  const deleteBudget = async (budgetId: string) => {
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .delete()
+        .eq('id', budgetId);
+
+      if (error) throw error;
+
+      setBudgets(prev => prev.filter(budget => budget.id !== budgetId));
+      toast({
+        title: "Buget șters",
+        description: "Bugetul a fost șters cu succes.",
+      });
+    } catch (error: any) {
+      console.error('Error deleting budget:', error);
+      toast({
+        title: "Eroare la ștergerea bugetului",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteGoal = async (goalId: string) => {
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .delete()
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      setGoals(prev => prev.filter(goal => goal.id !== goalId));
+      toast({
+        title: "Obiectiv șters",
+        description: "Obiectivul a fost șters cu succes.",
+      });
+    } catch (error: any) {
+      console.error('Error deleting goal:', error);
+      toast({
+        title: "Eroare la ștergerea obiectivului",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     await Promise.all([fetchBudgets(), fetchGoals()]);
@@ -116,7 +175,7 @@ const BudgetsAndGoals = () => {
 
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.limit_amount, 0);
   const totalSpent = budgets.reduce((sum, budget) => {
-    const spent = expensesByCategory[budget.category] || 0;
+    const spent = monthlyExpensesByCategory[budget.category] || 0;
     return sum + spent;
   }, 0);
   const totalRemaining = totalBudget - totalSpent;
@@ -193,7 +252,6 @@ const BudgetsAndGoals = () => {
               </Button>
             </div>
 
-            {/* Budget Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -210,7 +268,7 @@ const BudgetsAndGoals = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Cheltuit Total</CardTitle>
+                  <CardTitle className="text-sm font-medium">Cheltuit Luna Aceasta</CardTitle>
                   <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -237,11 +295,10 @@ const BudgetsAndGoals = () => {
               </Card>
             </div>
 
-            {/* Budgets List */}
             {budgets.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {budgets.map((budget) => {
-                  const spent = expensesByCategory[budget.category] || 0;
+                  const spent = monthlyExpensesByCategory[budget.category] || 0;
                   const percentage = budget.limit_amount > 0 ? (spent / budget.limit_amount) * 100 : 0;
                   const isOverBudget = percentage > 100;
                   const remaining = budget.limit_amount - spent;
@@ -251,9 +308,36 @@ const BudgetsAndGoals = () => {
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                           <span>{budget.category}</span>
-                          <span className="text-sm font-normal text-gray-500">
-                            {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-normal text-gray-500">
+                              {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
+                            </span>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Șterge Bugetul</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Ești sigur că vrei să ștergi bugetul pentru categoria "{budget.category}"? 
+                                    Această acțiune nu poate fi anulată.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Anulează</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteBudget(budget.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Șterge
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -325,7 +409,6 @@ const BudgetsAndGoals = () => {
               </Button>
             </div>
 
-            {/* Goals Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -372,7 +455,6 @@ const BudgetsAndGoals = () => {
               </Card>
             </div>
 
-            {/* Goals List */}
             {goals.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {goals.map((goal) => {
@@ -381,13 +463,36 @@ const BudgetsAndGoals = () => {
                   
                   return (
                     <Card key={goal.id} className={isCompleted ? 'border-green-200 bg-green-50' : ''}>
-                      {isCompleted && (
-                        <div className="flex justify-end p-2">
-                          <Trophy className="h-5 w-5 text-green-600" />
-                        </div>
-                      )}
+                      <div className="flex justify-between items-start p-2">
+                        {isCompleted && <Trophy className="h-5 w-5 text-green-600" />}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Șterge Obiectivul</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Ești sigur că vrei să ștergi obiectivul "{goal.title}"? 
+                                Această acțiune nu poate fi anulată.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Anulează</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteGoal(goal.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Șterge
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                       
-                      <CardHeader>
+                      <CardHeader className="pt-0">
                         <CardTitle className="flex items-center justify-between">
                           <span className="truncate">{goal.title}</span>
                         </CardTitle>
@@ -463,7 +568,6 @@ const BudgetsAndGoals = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Add Budget Modal */}
         <AddBudgetForm 
           isOpen={showAddBudgetForm} 
           onClose={() => {
@@ -472,7 +576,6 @@ const BudgetsAndGoals = () => {
           }} 
         />
 
-        {/* Add Goal Modal */}
         <AddGoalForm 
           isOpen={showAddGoalForm} 
           onClose={() => {

@@ -69,7 +69,7 @@ const BudgetOverview = ({ expensesByCategory }: BudgetOverviewProps) => {
     <Card>
       <CardHeader>
         <CardTitle>Buget pe Categorii</CardTitle>
-        <CardDescription>Progresul cheltuielilor față de bugetul alocat</CardDescription>
+        <CardDescription>Progresul cheltuielilor lunare față de bugetul alocat</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {budgets.length > 0 ? (
@@ -99,7 +99,7 @@ const BudgetOverview = ({ expensesByCategory }: BudgetOverviewProps) => {
                 )}
                 <div className="flex justify-between text-xs">
                   <span className={`${isOverBudget ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
-                    {percentage.toFixed(1)}% folosit
+                    {percentage.toFixed(1)}% folosit luna aceasta
                     {isOverBudget && ' (Depășit!)'}
                   </span>
                   <span className="text-gray-500">
