@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,9 @@ interface TransactionsContextType {
   getTotalIncome: () => number;
   getTotalExpenses: () => number;
   getBalance: () => number;
+  getMonthlyIncome: () => number;
+  getMonthlyExpenses: () => number;
+  getMonthlyBalance: () => number;
   getTransactionsByCategory: () => Record<string, number>;
   loading: boolean;
   refreshTransactions: () => Promise<void>;
@@ -49,6 +53,19 @@ const transformSupabaseTransaction = (data: any): Transaction => ({
   type: data.type as "income" | "expense",
   category: data.category
 });
+
+// Helper function to get current month's transactions
+const getCurrentMonthTransactions = (transactions: Transaction[]) => {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  return transactions.filter(transaction => {
+    const transactionDate = new Date(transaction.date);
+    return transactionDate.getMonth() === currentMonth && 
+           transactionDate.getFullYear() === currentYear;
+  });
+};
 
 export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ children }) => {
   const { user } = useAuth();
@@ -203,6 +220,24 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
     return getTotalIncome() - getTotalExpenses();
   };
 
+  const getMonthlyIncome = () => {
+    const monthlyTransactions = getCurrentMonthTransactions(transactions);
+    return monthlyTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getMonthlyExpenses = () => {
+    const monthlyTransactions = getCurrentMonthTransactions(transactions);
+    return monthlyTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getMonthlyBalance = () => {
+    return getMonthlyIncome() - getMonthlyExpenses();
+  };
+
   const getTransactionsByCategory = () => {
     return transactions.reduce((acc, transaction) => {
       if (transaction.type === 'expense') {
@@ -225,6 +260,9 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
     getTotalIncome,
     getTotalExpenses,
     getBalance,
+    getMonthlyIncome,
+    getMonthlyExpenses,
+    getMonthlyBalance,
     getTransactionsByCategory,
     loading,
     refreshTransactions

@@ -17,13 +17,13 @@ const OverviewCards = ({
   incomeTransactionCount, 
   expenseTransactionCount 
 }: OverviewCardsProps) => {
-  const savingsRate = totalIncome > 0 ? balance / totalIncome * 100 : 0;
+  const savingsRate = totalIncome > 0 ? (balance / totalIncome) * 100 : 0;
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Sold Total</CardTitle>
+          <CardTitle className="text-sm font-medium">Sold Luna</CardTitle>
           <PiggyBank className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

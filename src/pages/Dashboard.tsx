@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Navigate } from "react-router-dom";
@@ -10,7 +9,16 @@ import RecentTransactions from "@/components/dashboard/RecentTransactions";
 
 const Dashboard = () => {
   const { isAuthenticated, loading, userProfile } = useAuth();
-  const { transactions, getTotalIncome, getTotalExpenses, getBalance, getTransactionsByCategory } = useTransactions();
+  const { 
+    transactions, 
+    getTotalIncome, 
+    getTotalExpenses, 
+    getBalance, 
+    getMonthlyIncome,
+    getMonthlyExpenses,
+    getMonthlyBalance,
+    getTransactionsByCategory 
+  } = useTransactions();
 
   // Show loading while checking auth
   if (loading) {
@@ -29,10 +37,10 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Calculate real statistics
-  const totalIncome = getTotalIncome();
-  const totalExpenses = getTotalExpenses();
-  const balance = getBalance();
+  // Calculate monthly statistics for dashboard cards
+  const monthlyIncome = getMonthlyIncome();
+  const monthlyExpenses = getMonthlyExpenses();
+  const monthlyBalance = getMonthlyBalance();
   const expensesByCategory = getTransactionsByCategory();
 
   return (
@@ -43,11 +51,23 @@ const Dashboard = () => {
         <WelcomeSection userName={userProfile?.first_name} />
         
         <OverviewCards
-          balance={balance}
-          totalIncome={totalIncome}
-          totalExpenses={totalExpenses}
-          incomeTransactionCount={transactions.filter(t => t.type === 'income').length}
-          expenseTransactionCount={transactions.filter(t => t.type === 'expense').length}
+          balance={monthlyBalance}
+          totalIncome={monthlyIncome}
+          totalExpenses={monthlyExpenses}
+          incomeTransactionCount={transactions.filter(t => {
+            const transactionDate = new Date(t.date);
+            const now = new Date();
+            return t.type === 'income' && 
+                   transactionDate.getMonth() === now.getMonth() && 
+                   transactionDate.getFullYear() === now.getFullYear();
+          }).length}
+          expenseTransactionCount={transactions.filter(t => {
+            const transactionDate = new Date(t.date);
+            const now = new Date();
+            return t.type === 'expense' && 
+                   transactionDate.getMonth() === now.getMonth() && 
+                   transactionDate.getFullYear() === now.getFullYear();
+          }).length}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
