@@ -44,10 +44,10 @@ const FamilyMembersList = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={member.is_creator ? 'default' : 'secondary'}>
-                    {member.is_creator ? 'Creator' : 'Membru'}
+                  <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+                    {member.role === 'admin' ? 'Administrator' : 'Membru'}
                   </Badge>
-                  {isCreator && !member.is_creator && (
+                  {isCreator && member.role !== 'admin' && (
                     <Button 
                       variant="outline" 
                       size="sm"

@@ -58,14 +58,14 @@ const Family = () => {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{currentFamily.name}</h2>
                   <p className="text-gray-600 mt-1">
-                    {isCreator ? " Creator" : " Membru"}
+                    {isCreator ? "Administrator" : "Membru"}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   {isCreator && (
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       <Settings className="h-3 w-3 mr-1" />
-                      Creator
+                      Administrator
                     </Badge>
                   )}
                   <Button variant="outline" size="sm" onClick={handleLeaveFamily}>

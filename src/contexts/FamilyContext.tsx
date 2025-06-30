@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +15,7 @@ export interface FamilyMember {
   id: string;
   family_group_id: string;
   user_id: string;
+  role: string;
   joined_at: string;
   email?: string;
   first_name?: string;
@@ -95,9 +95,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         setCurrentFamily(familyGroup);
-        setIsCreator(familyGroup.created_by === user.id);
+        setIsCreator(membership.role === 'admin');
 
-        // Load all family members for this group - we'll get all memberships and then fetch profiles
+        // Load all family members for this group
         const { data: allMemberships, error: membersError } = await supabase
           .from('family_memberships')
           .select('*')
@@ -121,21 +121,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 email: profile?.email,
                 first_name: profile?.first_name,
                 last_name: profile?.last_name,
-                is_creator: familyGroup.created_by === member.user_id,
+                is_creator: member.role === 'admin',
               });
             } catch (profileError) {
               console.error('Error loading profile for user:', member.user_id, profileError);
               memberProfiles.push({
                 ...member,
-                is_creator: familyGroup.created_by === member.user_id,
+                is_creator: member.role === 'admin',
               });
             }
           }
           setFamilyMembers(memberProfiles);
         }
 
-        // Load pending invitations if user is the creator
-        if (familyGroup.created_by === user.id) {
+        // Load pending invitations if user is admin
+        if (membership.role === 'admin') {
           const { data: invitations, error: invitationsError } = await supabase
             .from('family_invitations')
             .select('*')
@@ -207,12 +207,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Family created successfully:', family);
 
-      // Add creator as member
+      // Add creator as admin member
       const { data: membership, error: memberError } = await supabase
         .from('family_memberships')
         .insert([{
           family_group_id: family.id,
-          user_id: user.id
+          user_id: user.id,
+          role: 'admin'
         }])
         .select()
         .single();
@@ -249,31 +250,43 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const inviteMember = async (email: string) => {
     try {
-      if (!user || !currentFamily) throw new Error('User not authenticated or no family');
+      if (!user || !currentFamily) {
+        throw new Error('Nu ești autentificat sau nu ai o familie');
+      }
 
-      const { error } = await supabase
+      console.log('Inviting member:', email, 'to family:', currentFamily.id);
+
+      const { data, error } = await supabase
         .from('family_invitations')
         .insert([{
           family_group_id: currentFamily.id,
-          email,
+          email: email.toLowerCase().trim(),
           invited_by: user.id,
-        }]);
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error inviting member:', error);
+        
+        if (error.code === '23505') {
+          throw new Error('Această adresă de email a fost deja invitată');
+        }
+        
+        throw new Error(error.message || 'Eroare la trimiterea invitației');
+      }
 
+      console.log('Invitation created successfully:', data);
+      
       toast({
         title: "Succes",
         description: "Invitația a fost trimisă cu succes",
       });
 
       await loadFamilyData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error inviting member:', error);
-      toast({
-        title: "Eroare",
-        description: "Nu s-a putut trimite invitația",
-        variant: "destructive",
-      });
+      throw error;
     }
   };
 
@@ -293,7 +306,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .from('family_memberships')
         .insert([{
           family_group_id: invitation.family_group_id,
-          user_id: user.id
+          user_id: user.id,
+          role: 'member'
         }]);
 
       await supabase
@@ -343,7 +357,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const removeMember = async (memberId: string) => {
     try {
       if (!isCreator) {
-        throw new Error('Doar creatorul familiei poate elimina membri');
+        throw new Error('Doar administratorii familiei pot elimina membri');
       }
 
       await supabase
