@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -54,8 +55,8 @@ const Reports = () => {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 justify-items-center">
+                  <Card className="w-full max-w-2xl">
                     <CardHeader>
                       <CardTitle>Venituri vs Cheltuieli</CardTitle>
                       <CardDescription>Comparația lunară a veniturilor și cheltuielilor</CardDescription>
@@ -65,7 +66,7 @@ const Reports = () => {
                     </CardContent>
                   </Card>
                   
-                  <Card>
+                  <Card className="w-full max-w-2xl">
                     <CardHeader>
                       <CardTitle>Distribuția pe Categorii</CardTitle>
                       <CardDescription>Cheltuielile grupate pe categorii</CardDescription>
@@ -78,39 +79,45 @@ const Reports = () => {
               </TabsContent>
 
               <TabsContent value="budget">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Analiza Bugetelor</CardTitle>
-                    <CardDescription>Comparația între bugetele planificate și cheltuielile reale</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <BudgetChart />
-                  </CardContent>
-                </Card>
+                <div className="flex justify-center">
+                  <Card className="w-full max-w-4xl">
+                    <CardHeader>
+                      <CardTitle>Analiza Bugetelor</CardTitle>
+                      <CardDescription>Comparația între bugetele planificate și cheltuielile reale</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <BudgetChart />
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="trends">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Tendințe Financiare</CardTitle>
-                    <CardDescription>Evoluția economiilor și cheltuielilor în timp</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TrendChart />
-                  </CardContent>
-                </Card>
+                <div className="flex justify-center">
+                  <Card className="w-full max-w-4xl">
+                    <CardHeader>
+                      <CardTitle>Tendințe Financiare</CardTitle>
+                      <CardDescription>Evoluția economiilor și cheltuielilor în timp</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <TrendChart />
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="categories">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Analiza Categoriilor</CardTitle>
-                    <CardDescription>Distribuția detaliată a cheltuielilor pe categorii</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <CategoryBreakdown />
-                  </CardContent>
-                </Card>
+                <div className="flex justify-center">
+                  <Card className="w-full max-w-4xl">
+                    <CardHeader>
+                      <CardTitle>Analiza Categoriilor</CardTitle>
+                      <CardDescription>Distribuția detaliată a cheltuielilor pe categorii</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <CategoryBreakdown />
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </Tabs>
           )}
