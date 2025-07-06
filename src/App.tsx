@@ -12,6 +12,7 @@ import Investments from './pages/Investments';
 import Family from "@/pages/Family";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
+import DataFlow from "./pages/DataFlow";
 import { Toaster } from "@/components/ui/toaster"
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/investments" element={<Investments />} />
                 <Route path="/family" element={<Family />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/dataflow" element={<DataFlow />} />
               </Routes>
               <Toaster />
             </BrowserRouter>
