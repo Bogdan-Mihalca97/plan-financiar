@@ -179,7 +179,7 @@ const Auth = () => {
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle>{isLogin ? "Bun Venit Înapoi" : "Creează Cont"}</CardTitle>
+            <CardTitle>{isLogin ? "Bun Venit " : "Creează Cont"}</CardTitle>
             <CardDescription>
               {isLogin 
                 ? "Conectează-te la contul tău BugetControl" 
