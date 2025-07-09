@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,42 +37,78 @@ const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
   const { currentFamily } = useFamily();
 
   const parseCSV = (csvText: string): ParsedTransaction[] => {
-    const lines = csvText.split('\n');
-    const headers = lines[0]?.split(',') || [];
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length === 0) return [];
+    
+    const headers = lines[0]?.split(',').map(h => h.trim().toLowerCase()) || [];
     const transactions: ParsedTransaction[] = [];
 
+    // Support multiple header formats
+    const getColumnIndex = (possibleNames: string[]) => {
+      return possibleNames.map(name => headers.indexOf(name)).find(index => index !== -1) ?? -1;
+    };
+
+    const dateIndex = getColumnIndex(['date', 'data']);
+    const descriptionIndex = getColumnIndex(['description', 'descriere']);
+    const amountIndex = getColumnIndex(['amount', 'suma']);
+    const typeIndex = getColumnIndex(['type', 'tip']);
+    const categoryIndex = getColumnIndex(['category', 'categorie']);
+
+    console.log('CSV Headers found:', headers);
+    console.log('Column indices:', { dateIndex, descriptionIndex, amountIndex, typeIndex, categoryIndex });
+
     for (let i = 1; i < lines.length; i++) {
-      const data = lines[i]?.split(',') || [];
-      if (data.length !== headers.length) continue;
+      const data = lines[i]?.split(',').map(cell => cell.trim()) || [];
+      if (data.length < Math.max(dateIndex, descriptionIndex, amountIndex) + 1) continue;
 
       const transaction: Partial<ParsedTransaction> = {};
 
-      for (let j = 0; j < headers.length; j++) {
-        const header = headers[j]?.trim().toLowerCase();
-        const value = data[j]?.trim();
+      // Parse date
+      if (dateIndex !== -1 && data[dateIndex]) {
+        transaction.date = data[dateIndex];
+      }
 
-        if (header === 'date') {
-          transaction.date = value;
-        } else if (header === 'description') {
-          transaction.description = value;
-        } else if (header === 'amount') {
-          transaction.amount = parseFloat(value);
-        } else if (header === 'type') {
-          if (value.toLowerCase() === 'income' || value.toLowerCase() === 'venit') {
-            transaction.type = 'income';
-          } else if (value.toLowerCase() === 'expense' || value.toLowerCase() === 'cheltuiala') {
-            transaction.type = 'expense';
-          }
-        } else if (header === 'category') {
-          transaction.category = value;
+      // Parse description
+      if (descriptionIndex !== -1 && data[descriptionIndex]) {
+        transaction.description = data[descriptionIndex];
+      }
+
+      // Parse amount
+      if (amountIndex !== -1 && data[amountIndex]) {
+        const amountStr = data[amountIndex].replace(',', '.');
+        const amount = parseFloat(amountStr);
+        if (!isNaN(amount)) {
+          transaction.amount = Math.abs(amount); // Store as positive number
+          // Determine type based on original amount sign
+          transaction.type = amount >= 0 ? 'income' : 'expense';
         }
       }
 
-      if (transaction.date && transaction.description && transaction.amount && transaction.type && transaction.category) {
+      // Parse type (if available, otherwise use amount-based determination)
+      if (typeIndex !== -1 && data[typeIndex]) {
+        const typeValue = data[typeIndex].toLowerCase();
+        if (typeValue === 'income' || typeValue === 'venit') {
+          transaction.type = 'income';
+        } else if (typeValue === 'expense' || typeValue === 'cheltuiala') {
+          transaction.type = 'expense';
+        }
+      }
+
+      // Parse category (if available, otherwise use default)
+      if (categoryIndex !== -1 && data[categoryIndex]) {
+        transaction.category = data[categoryIndex];
+      } else {
+        // Provide default categories based on transaction type
+        transaction.category = transaction.type === 'income' ? 'Venit' : 'Cheltuiala';
+      }
+
+      // Only add transaction if we have the essential fields
+      if (transaction.date && transaction.description && transaction.amount !== undefined && transaction.type && transaction.category) {
         transactions.push(transaction as ParsedTransaction);
       }
     }
 
+    console.log('Parsed transactions:', transactions);
     return transactions;
   };
 
@@ -94,7 +131,7 @@ const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
       const parsedTransactions = parseCSV(csvText);
 
       if (parsedTransactions.length === 0) {
-        throw new Error("Nu s-au găsit tranzacții valide în fișier");
+        throw new Error("Nu s-au găsit tranzacții valide în fișier. Verifică formatul CSV.");
       }
 
       // Convert parsed transactions to full Transaction objects
@@ -123,6 +160,9 @@ const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
       
       onClose();
       setFile(null);
+      
+      // Refresh the page to show new transactions
+      window.location.reload();
     } catch (error: any) {
       console.error('Error importing CSV:', error);
       toast({
@@ -140,8 +180,20 @@ const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Importă Tranzacții din CSV</DialogTitle>
-          <DialogDescription>
-            Încarcă un fișier CSV cu tranzacțiile tale.
+          <DialogDescription className="space-y-2">
+            <div>Încarcă un fișier CSV cu tranzacțiile tale.</div>
+            <div className="text-sm">
+              <strong>Format acceptat:</strong>
+              <br />
+              Data,Descriere,Suma,Sold (opțional)
+              <br />
+              sau
+              <br />
+              Date,Description,Amount,Type,Category
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Sumele negative vor fi considerate cheltuieli, cele pozitive venituri.
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -157,7 +209,7 @@ const ImportCSVForm = ({ isOpen, onClose }: ImportCSVFormProps) => {
             />
           </div>
 
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? "Se Importă..." : "Importă"}
           </Button>
         </form>
