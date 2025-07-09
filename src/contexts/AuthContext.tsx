@@ -269,42 +269,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (profileError) {
         console.error('Error deleting profile:', profileError);
-        // Continue with account deletion even if profile deletion fails
+        // Continue even if profile deletion fails
       }
 
-      // Then delete the user account using the user's own session
-      // This approach doesn't require admin privileges
-      const { error } = await supabase.rpc('delete_user');
+      // Clean up local state first
+      cleanupAuthState();
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
       
-      if (error) {
-        // If RPC function doesn't exist, try alternative approach
-        console.log('RPC delete_user not available, using auth signOut');
-        
-        // Clean up local state
-        cleanupAuthState();
-        setUser(null);
-        setSession(null);
-        setUserProfile(null);
-        
-        // Sign out the user
-        await supabase.auth.signOut({ scope: 'global' });
-        
-        toast({
-          title: "Cont șters",
-          description: "Datele tale au fost eliminate cu succes. Contul va fi dezactivat.",
-        });
-      } else {
-        // Clean up local state
-        cleanupAuthState();
-        setUser(null);
-        setSession(null);
-        setUserProfile(null);
-        
-        toast({
-          title: "Cont șters",
-          description: "Contul tău a fost șters cu succes",
-        });
-      }
+      // Sign out the user globally
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      toast({
+        title: "Cont șters",
+        description: "Datele tale au fost eliminate cu succes din aplicație.",
+      });
       
       // Redirect to home page
       setTimeout(() => {
