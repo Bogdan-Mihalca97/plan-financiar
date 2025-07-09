@@ -4,13 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Check, X } from "lucide-react";
 import { useFamily } from "@/contexts/FamilyContext";
+import { useState } from "react";
 
 const PendingInvitationsCard = () => {
   const { pendingInvitations, acceptInvitation, declineInvitation } = useFamily();
+  const [processingInvites, setProcessingInvites] = useState<string[]>([]);
+
+  console.log('PendingInvitationsCard - pendingInvitations:', pendingInvitations);
 
   if (pendingInvitations.length === 0) {
     return null;
   }
+
+  const handleAccept = async (invitationId: string) => {
+    setProcessingInvites(prev => [...prev, invitationId]);
+    try {
+      await acceptInvitation(invitationId);
+    } finally {
+      setProcessingInvites(prev => prev.filter(id => id !== invitationId));
+    }
+  };
+
+  const handleDecline = async (invitationId: string) => {
+    setProcessingInvites(prev => [...prev, invitationId]);
+    try {
+      await declineInvitation(invitationId);
+    } finally {
+      setProcessingInvites(prev => prev.filter(id => id !== invitationId));
+    }
+  };
 
   return (
     <Card className="border-blue-200 bg-blue-50">
@@ -44,20 +66,22 @@ const PendingInvitationsCard = () => {
               <div className="flex gap-2 mt-4">
                 <Button
                   size="sm"
-                  onClick={() => acceptInvitation(invitation.id)}
+                  onClick={() => handleAccept(invitation.id)}
                   className="flex-1"
+                  disabled={processingInvites.includes(invitation.id)}
                 >
                   <Check className="h-4 w-4 mr-1" />
-                  Acceptă
+                  {processingInvites.includes(invitation.id) ? 'Se procesează...' : 'Acceptă'}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => declineInvitation(invitation.id)}
+                  onClick={() => handleDecline(invitation.id)}
                   className="flex-1"
+                  disabled={processingInvites.includes(invitation.id)}
                 >
                   <X className="h-4 w-4 mr-1" />
-                  Refuză
+                  {processingInvites.includes(invitation.id) ? 'Se procesează...' : 'Refuză'}
                 </Button>
               </div>
             </div>

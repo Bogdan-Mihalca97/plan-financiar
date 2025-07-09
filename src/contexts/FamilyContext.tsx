@@ -157,7 +157,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else {
         // No family membership found - check for pending invitations
+        console.log('No family membership found, checking for pending invitations...');
+        
         if (userProfile?.email) {
+          console.log('Checking invitations for email:', userProfile.email);
+          
           const { data: pendingInvitations, error: pendingError } = await supabase
             .from('family_invitations')
             .select(`
@@ -165,9 +169,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               family_groups!inner(name),
               inviter_profiles:profiles!family_invitations_invited_by_fkey(first_name, last_name)
             `)
-            .eq('email', userProfile.email)
+            .eq('email', userProfile.email.toLowerCase())
             .eq('status', 'pending')
             .gt('expires_at', new Date().toISOString());
+
+          console.log('Pending invitations query result:', { pendingInvitations, pendingError });
 
           if (pendingError) {
             console.error('Error loading pending invitations:', pendingError);
@@ -190,7 +196,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               title: "Invitații în așteptare",
               description: `Ai ${pendingInvitations.length} invitație${pendingInvitations.length > 1 ? 'i' : ''} de alăturare la familie în așteptare.`,
             });
+          } else {
+            console.log('No pending invitations found');
+            setPendingInvitations([]);
           }
+        } else {
+          console.log('No user email found in profile');
         }
 
         setCurrentFamily(null);
@@ -369,6 +380,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       if (!user) throw new Error('Nu ești autentificat');
 
+      console.log('Accepting invitation:', invitationId);
+
       const { data: invitation } = await supabase
         .from('family_invitations')
         .select('*')
@@ -376,6 +389,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .single();
 
       if (!invitation) throw new Error('Invitația nu a fost găsită');
+
+      console.log('Found invitation:', invitation);
 
       // Check if user is already a member
       const { data: existingMembership } = await supabase
@@ -418,6 +433,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: "Te-ai alăturat familiei cu succes",
       });
 
+      // Clear pending invitations and reload family data
+      setPendingInvitations([]);
       await loadFamilyData();
     } catch (error: any) {
       console.error('Error accepting invitation:', error);
@@ -431,6 +448,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const declineInvitation = async (invitationId: string) => {
     try {
+      console.log('Declining invitation:', invitationId);
+      
       await supabase
         .from('family_invitations')
         .update({ status: 'declined' })
