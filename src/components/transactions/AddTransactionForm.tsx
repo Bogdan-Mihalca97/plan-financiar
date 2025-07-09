@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!user) {
       toast({
@@ -42,9 +44,23 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
       return;
     }
 
+    if (isLoading) {
+      return; // Prevent double submission
+    }
+
     setIsLoading(true);
 
     try {
+      console.log('Adding transaction:', {
+        user_id: user.id,
+        date: formData.date,
+        description: formData.description,
+        amount: parseFloat(formData.amount),
+        type: formData.type,
+        category: formData.category,
+        family_group_id: currentFamily?.id || null
+      });
+
       await addTransaction({
         user_id: user.id,
         date: formData.date,
@@ -120,6 +136,7 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
                 onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                 className="pl-10"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -133,6 +150,7 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
               required
+              disabled={isLoading}
             />
           </div>
           
@@ -146,12 +164,17 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
               required
+              disabled={isLoading}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="type">Tip</Label>
-            <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as "income" | "expense" }))}>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as "income" | "expense" }))}
+              disabled={isLoading}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selectează tipul" />
               </SelectTrigger>
@@ -164,7 +187,12 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
           
           <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))} required>
+            <Select 
+              value={formData.category} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))} 
+              required
+              disabled={isLoading}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selectează categoria" />
               </SelectTrigger>
