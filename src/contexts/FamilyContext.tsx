@@ -48,10 +48,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('🔄 Auth state ready, loading family data');
       loadFamilyData();
     } else {
-      console.log('⏳ Waiting for auth state or user profile');
+      console.log('⏳ Waiting for auth state or user profile, setting loading to false');
       setLoading(false);
     }
-  }, [user, isAuthenticated, userProfile]);
+  }, [user, isAuthenticated, userProfile, loadFamilyData]);
 
   const refreshFamily = async () => {
     setLoading(true);
