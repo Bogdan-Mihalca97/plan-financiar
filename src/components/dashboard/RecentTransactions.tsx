@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Transaction } from "@/contexts/TransactionsContext";
+import { Transaction } from "@/types/transaction";
 
 interface RecentTransactionsProps {
   transactions: Transaction[];

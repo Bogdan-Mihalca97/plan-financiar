@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddTransactionFormProps {
   isOpen: boolean;
@@ -23,13 +24,25 @@ const AddTransactionForm = ({ isOpen, onClose }: AddTransactionFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { addTransaction } = useTransactions();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
+    if (!user) {
+      toast({
+        title: "Eroare",
+        description: "Trebuie să fii autentificat pentru a adăuga tranzacții.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await addTransaction({
+        user_id: user.id,
         date,
         description,
         amount: parseFloat(amount),

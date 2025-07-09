@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit2, Trash2, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import EditTransactionForm from "@/components/transactions/EditTransactionForm";
 import { Transaction } from "@/types/transaction";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 interface TransactionsListProps {
   transactions: Transaction[];
@@ -15,6 +16,7 @@ interface TransactionsListProps {
 
 const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDeleted }: TransactionsListProps) => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const { deleteTransaction } = useTransactions();
 
   const handleUpdateTransaction = () => {
     onTransactionUpdated();
@@ -23,7 +25,12 @@ const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDel
 
   const handleDeleteTransaction = async (transactionId: string) => {
     if (window.confirm("Ești sigur că vrei să ștergi această tranzacție?")) {
-      onTransactionDeleted();
+      try {
+        await deleteTransaction(transactionId);
+        onTransactionDeleted();
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+      }
     }
   };
 
@@ -107,8 +114,8 @@ const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDel
         {editingTransaction && (
           <EditTransactionForm
             transaction={editingTransaction}
+            isOpen={!!editingTransaction}
             onClose={() => setEditingTransaction(null)}
-            onTransactionUpdated={handleUpdateTransaction}
           />
         )}
       </CardContent>

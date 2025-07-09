@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, CheckCircle } from "lucide-react";
-import type { Transaction } from "@/contexts/TransactionsContext";
+import type { Transaction } from "@/types/transaction";
 
 interface ImportCSVFormProps {
   isOpen: boolean;

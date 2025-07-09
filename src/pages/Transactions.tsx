@@ -4,7 +4,7 @@ import { useTransactions } from '@/contexts/TransactionsContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { Navigate } from 'react-router-dom';
 import Navigation from "@/components/Navigation";
-import AddTransactionForm from "@/components/transactions/AddTransactionForm";
+import AddTransactionButton from "@/components/transactions/AddTransactionButton";
 import TransactionsList from "@/components/transactions/TransactionsList";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -56,7 +56,7 @@ const Transactions = () => {
               )}
             </p>
           </div>
-          <AddTransactionForm />
+          <AddTransactionButton />
         </div>
 
         {currentFamily && familyTransactions.length > 0 && (
