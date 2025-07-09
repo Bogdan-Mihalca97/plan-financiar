@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -214,8 +215,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (data.user) {
         toast({
-          title: "Cont Creat!",
-          description: "Verifică-ți emailul pentru a confirma contul.",
+          title: "Cont Creat cu Succes!",
+          description: "Verifică-ți emailul pentru a confirma contul și apoi conectează-te.",
         });
       }
     } catch (error: any) {
