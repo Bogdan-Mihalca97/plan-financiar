@@ -78,16 +78,20 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Stats */}
+        {/* Benefits Section */}
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="grid md:grid-cols-2 gap-8 text-center">
-            <div>
-              <div className="text-3xl font-bold text-indigo-600 mb-2">10.000+</div>
-              <div className="text-gray-600">Utilizatori Activi</div>
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">De ce să alegi BugetControl?</h3>
+            <p className="text-gray-600">Instrumentele de care ai nevoie pentru a-ți transforma viața financiară</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-indigo-600 mb-2">Gratuit</div>
+              <div className="text-gray-600">Să începi fără costuri</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">95%</div>
-              <div className="text-gray-600">Satisfacția Utilizatorilor</div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">Securitate</div>
+              <div className="text-gray-600">Datele tale sunt protejate</div>
             </div>
           </div>
         </div>
