@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -64,6 +63,29 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { toast } = useToast();
   const { user, isAuthenticated, userProfile } = useAuth();
 
+  const cleanupOrphanedMembership = async (membershipId: string) => {
+    try {
+      console.log('🧹 Cleaning up orphaned membership:', membershipId);
+      
+      const { error } = await supabase
+        .from('family_memberships')
+        .delete()
+        .eq('id', membershipId);
+
+      if (error) {
+        console.error('❌ Error cleaning up orphaned membership:', error);
+      } else {
+        console.log('✅ Successfully cleaned up orphaned membership');
+        toast({
+          title: "Curățare automată",
+          description: "Am eliminat o apartenență invalidă la familie.",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error in cleanup:', error);
+    }
+  };
+
   const loadFamilyData = async () => {
     if (!user || !isAuthenticated) {
       console.log('🔍 User not authenticated, skipping family data load');
@@ -108,7 +130,20 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         if (!familyGroup) {
           console.error('❌ Family group not found for membership:', membership);
-          throw new Error('Familie nu a fost găsită');
+          console.log('🧹 Will clean up orphaned membership and continue without family');
+          
+          // Clean up orphaned membership
+          await cleanupOrphanedMembership(membership.id);
+          
+          // Continue as if user has no family
+          setCurrentFamily(null);
+          setFamilyMembers([]);
+          setFamilyInvitations([]);
+          setIsCreator(false);
+          
+          // Check for pending invitations
+          await loadPendingInvitations();
+          return;
         }
 
         console.log('✅ Family group loaded:', familyGroup);
@@ -179,94 +214,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // No family membership found - check for pending invitations
         console.log('🔍 No family membership found, checking for pending invitations...');
         
-        if (userProfile?.email) {
-          console.log('🔍 User email from profile:', userProfile.email);
-          
-          // Check for pending invitations using the email from profile
-          const { data: pendingInvitations, error: pendingError } = await supabase
-            .from('family_invitations')
-            .select('*')
-            .eq('email', userProfile.email.toLowerCase())
-            .eq('status', 'pending')
-            .gt('expires_at', new Date().toISOString());
-
-          console.log('🔍 Pending invitations query result:', { 
-            email: userProfile.email.toLowerCase(),
-            pendingInvitations, 
-            pendingError 
-          });
-
-          if (pendingError) {
-            console.error('❌ Error loading pending invitations:', pendingError);
-          } else if (pendingInvitations && pendingInvitations.length > 0) {
-            console.log('✅ Found pending invitations:', pendingInvitations);
-            
-            // Get additional details for each invitation
-            const enrichedInvitations = [];
-            for (const invitation of pendingInvitations) {
-              try {
-                console.log('🔍 Enriching invitation:', invitation.id);
-                
-                // Get family name
-                const { data: family } = await supabase
-                  .from('family_groups')
-                  .select('name')
-                  .eq('id', invitation.family_group_id)
-                  .maybeSingle();
-
-                console.log('🔍 Family for invitation:', family);
-
-                // Get inviter name
-                const { data: inviterProfile } = await supabase
-                  .from('profiles')
-                  .select('first_name, last_name')
-                  .eq('id', invitation.invited_by)
-                  .maybeSingle();
-
-                console.log('🔍 Inviter profile:', inviterProfile);
-
-                enrichedInvitations.push({
-                  ...invitation,
-                  status: invitation.status as 'pending' | 'accepted' | 'declined',
-                  family_name: family?.name || 'Familie necunoscută',
-                  inviter_name: inviterProfile 
-                    ? `${inviterProfile.first_name} ${inviterProfile.last_name}`.trim()
-                    : 'Administrator'
-                });
-              } catch (error) {
-                console.error('❌ Error enriching invitation:', error);
-                enrichedInvitations.push({
-                  ...invitation,
-                  status: invitation.status as 'pending' | 'accepted' | 'declined',
-                  family_name: 'Familie necunoscută',
-                  inviter_name: 'Administrator'
-                });
-              }
-            }
-
-            console.log('✅ Enriched invitations:', enrichedInvitations);
-            setPendingInvitations(enrichedInvitations);
-
-            // Show notification for pending invitations
-            if (enrichedInvitations.length > 0) {
-              toast({
-                title: "Invitații în așteptare",
-                description: `Ai ${enrichedInvitations.length} invitație${enrichedInvitations.length > 1 ? 'i' : ''} de alăturare la familie în așteptare.`,
-              });
-            }
-          } else {
-            console.log('ℹ️ No pending invitations found');
-            setPendingInvitations([]);
-          }
-        } else {
-          console.log('⚠️ No user email found in profile');
-          setPendingInvitations([]);
-        }
-
         setCurrentFamily(null);
         setFamilyMembers([]);
         setFamilyInvitations([]);
         setIsCreator(false);
+        
+        await loadPendingInvitations();
       }
     } catch (error: any) {
       console.error('❌ Error loading family data:', error);
@@ -277,6 +230,92 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPendingInvitations = async () => {
+    if (userProfile?.email) {
+      console.log('🔍 User email from profile:', userProfile.email);
+      
+      // Check for pending invitations using the email from profile
+      const { data: pendingInvitations, error: pendingError } = await supabase
+        .from('family_invitations')
+        .select('*')
+        .eq('email', userProfile.email.toLowerCase())
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString());
+
+      console.log('🔍 Pending invitations query result:', { 
+        email: userProfile.email.toLowerCase(),
+        pendingInvitations, 
+        pendingError 
+      });
+
+      if (pendingError) {
+        console.error('❌ Error loading pending invitations:', pendingError);
+      } else if (pendingInvitations && pendingInvitations.length > 0) {
+        console.log('✅ Found pending invitations:', pendingInvitations);
+        
+        // Get additional details for each invitation
+        const enrichedInvitations = [];
+        for (const invitation of pendingInvitations) {
+          try {
+            console.log('🔍 Enriching invitation:', invitation.id);
+            
+            // Get family name
+            const { data: family } = await supabase
+              .from('family_groups')
+              .select('name')
+              .eq('id', invitation.family_group_id)
+              .maybeSingle();
+
+            console.log('🔍 Family for invitation:', family);
+
+            // Get inviter name
+            const { data: inviterProfile } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', invitation.invited_by)
+              .maybeSingle();
+
+            console.log('🔍 Inviter profile:', inviterProfile);
+
+            enrichedInvitations.push({
+              ...invitation,
+              status: invitation.status as 'pending' | 'accepted' | 'declined',
+              family_name: family?.name || 'Familie necunoscută',
+              inviter_name: inviterProfile 
+                ? `${inviterProfile.first_name} ${inviterProfile.last_name}`.trim()
+                : 'Administrator'
+            });
+          } catch (error) {
+            console.error('❌ Error enriching invitation:', error);
+            enrichedInvitations.push({
+              ...invitation,
+              status: invitation.status as 'pending' | 'accepted' | 'declined',
+              family_name: 'Familie necunoscută',
+              inviter_name: 'Administrator'
+            });
+          }
+        }
+
+        console.log('✅ Enriched invitations:', enrichedInvitations);
+        setPendingInvitations(enrichedInvitations);
+
+        // Show notification for pending invitations
+        if (enrichedInvitations.length > 0) {
+          toast({
+            title: "Invitații în așteptare",
+            description: `Ai ${enrichedInvitations.length} invitație${enrichedInvitations.length > 1 ? 'i' : ''} de alăturare la familie în așteptare.`,
+          });
+        }
+      } else {
+        console.log('ℹ️ No pending invitations found');
+        setPendingInvitations([]);
+      }
+    } else {
+      console.log('⚠️ No user email found in profile');
+      setPendingInvitations([]);
     }
   };
 
@@ -422,9 +461,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Invitation created successfully:', data);
 
-      // TEMPORAR: Dezactivez trimiterea de email pentru testare
-      console.log('Email sending disabled for testing - invitation created successfully');
-      
       toast({
         title: "Succes",
         description: "Invitația a fost creată cu succes în baza de date",
@@ -501,7 +537,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setPendingInvitations([]);
       
       console.log('🔄 Reloading family data after accepting invitation');
-      // Reload immediately without delay
       await loadFamilyData();
       
     } catch (error: any) {
