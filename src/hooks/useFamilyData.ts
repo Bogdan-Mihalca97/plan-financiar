@@ -17,6 +17,7 @@ export const useFamilyData = (
   const { toast } = useToast();
   const { user, isAuthenticated, userProfile } = useAuth();
   const loadingRef = useRef(false);
+  const hasShownFamilyFoundToast = useRef(false);
 
   const loadPendingInvitations = async () => {
     if (userProfile?.email) {
@@ -182,11 +183,14 @@ export const useFamilyData = (
           }
         }
 
-        // Show success message that the user is now part of the family
-        toast({
-          title: "Familie găsită",
-          description: `Faci parte din familia "${familyGroup.name}". Acum poți vedea datele partajate ale familiei.`,
-        });
+        // Show success message only once when the user is first found to be part of the family
+        if (!hasShownFamilyFoundToast.current) {
+          hasShownFamilyFoundToast.current = true;
+          toast({
+            title: "Familie găsită",
+            description: `Faci parte din familia "${familyGroup.name}". Acum poți vedea datele partajate ale familiei.`,
+          });
+        }
 
       } else {
         // No family membership found - check for pending invitations
