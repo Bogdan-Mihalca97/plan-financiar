@@ -100,7 +100,7 @@ export const useFamilyData = (
         console.log('✅ User has family membership:', membership);
         console.log('🔍 Looking for family with ID:', membership.family_group_id);
 
-        // Get the family group details - let's debug why this fails
+        // Get the family group details
         const { data: familyGroup, error: familyError } = await supabase
           .from('family_groups')
           .select('*')
@@ -112,13 +112,6 @@ export const useFamilyData = (
           familyError,
           searchingForId: membership.family_group_id 
         });
-
-        // Let's also check what family groups exist for this user
-        const { data: allFamilyGroups, error: allFamilyError } = await supabase
-          .from('family_groups')
-          .select('*');
-
-        console.log('🔍 All family groups in database:', { allFamilyGroups, allFamilyError });
 
         if (familyError) {
           console.error('❌ Error loading family group:', familyError);
@@ -188,6 +181,13 @@ export const useFamilyData = (
             })));
           }
         }
+
+        // Show success message that the user is now part of the family
+        toast({
+          title: "Familie găsită",
+          description: `Faci parte din familia "${familyGroup.name}". Acum poți vedea datele partajate ale familiei.`,
+        });
+
       } else {
         // No family membership found - check for pending invitations
         console.log('🔍 No family membership found, checking for pending invitations...');

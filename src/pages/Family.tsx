@@ -10,7 +10,7 @@ import PendingInvitationsCard from "@/components/family/PendingInvitationsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Users, Target, DollarSign } from "lucide-react";
 
 const Family = () => {
   const { 
@@ -117,21 +117,48 @@ const Family = () => {
               </div>
             </div>
 
-            {/* Info about shared features */}
+            {/* Family shared data info */}
             <Card>
               <CardHeader>
-                <CardTitle>Funcții Familie</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Date Partajate Familie
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-gray-600">
-                  <p className="mb-2">
-                    Ca membru al acestei familii, ai acces la:
-                  </p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Bugetele partajate ale familiei</li>
-                    <li>Obiectivele financiare comune</li>
-                    <li>Tranzacțiile familiei</li>
-                    <li>Rapoartele financiare comune</li>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+                    <DollarSign className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <h3 className="font-medium text-blue-900">Tranzacții Familie</h3>
+                      <p className="text-sm text-blue-700">Vezi toate tranzacțiile familiei în secțiunea Tranzacții</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+                    <Target className="h-8 w-8 text-green-600" />
+                    <div>
+                      <h3 className="font-medium text-green-900">Bugete Comune</h3>
+                      <p className="text-sm text-green-700">Accesează bugetele partajate în secțiunea Bugete</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg">
+                    <Target className="h-8 w-8 text-purple-600" />
+                    <div>
+                      <h3 className="font-medium text-purple-900">Obiective Familie</h3>
+                      <p className="text-sm text-purple-700">Vezi obiectivele comune în secțiunea Obiective</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Cum să vezi datele familiei:</h4>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• Mergi la <strong>Tranzacții</strong> - vei vedea toate tranzacțiile tale și ale familiei</li>
+                    <li>• Mergi la <strong>Bugete</strong> - vei putea gestiona bugetele personale și de familie</li>
+                    <li>• Mergi la <strong>Obiective</strong> - vei vedea obiectivele tale și cele comune</li>
+                    <li>• Toate datele familiei sunt marcate special pentru identificare ușoară</li>
                   </ul>
                 </div>
               </CardContent>
