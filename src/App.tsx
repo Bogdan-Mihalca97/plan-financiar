@@ -17,6 +17,7 @@ import Investments from "@/pages/Investments";
 import Transactions from "@/pages/Transactions";
 import Budgets from "@/pages/Budgets";
 import Goals from "@/pages/Goals";
+import BudgetsAndGoals from "@/pages/BudgetsAndGoals";
 import Family from "@/pages/Family";
 import Profile from "@/pages/Profile";
 import Reports from "@/pages/Reports";
@@ -43,6 +44,7 @@ const App = () => (
                       <Route path="/transactions" element={<Transactions />} />
                       <Route path="/budgets" element={<Budgets />} />
                       <Route path="/goals" element={<Goals />} />
+                      <Route path="/budgets-and-goals" element={<BudgetsAndGoals />} />
                       <Route path="/family" element={<Family />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/reports" element={<Reports />} />

@@ -21,7 +21,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/transactions', label: 'Tranzacții', icon: CreditCard },
-    { path: '/budgets', label: 'Buget', icon: Target },
+    { path: '/budgets-and-goals', label: 'Bugete și Obiective', icon: Target },
     { path: '/investments', label: 'Investiții', icon: TrendingUp },
     { path: '/family', label: 'Familie', icon: Users },
     { path: '/reports', label: 'Rapoarte', icon: BarChart3 },
@@ -43,7 +43,7 @@ const Navigation = () => {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path || 
-                  (item.path === '/budgets' && location.pathname === '/goals');
+                  (item.path === '/budgets-and-goals' && (location.pathname === '/budgets' || location.pathname === '/goals'));
                 return (
                   <Link
                     key={item.path}
