@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,8 +47,7 @@ const InvitationAcceptance = () => {
         .from('family_invitations')
         .select(`
           *,
-          family_groups (name, created_by),
-          profiles!family_invitations_invited_by_fkey (first_name, last_name)
+          family_groups (name, created_by)
         `)
         .eq('id', invitationId)
         .eq('status', 'pending')
@@ -80,7 +78,23 @@ const InvitationAcceptance = () => {
         return;
       }
 
-      setInvitation(data);
+      // Get the inviter's profile separately
+      const { data: inviterProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', data.invited_by)
+        .single();
+
+      if (profileError) {
+        console.error('Error loading inviter profile:', profileError);
+      }
+
+      const invitationData = {
+        ...data,
+        profiles: inviterProfile || { first_name: 'Un utilizator', last_name: '' }
+      };
+
+      setInvitation(invitationData);
     } catch (error) {
       console.error('Error loading invitation:', error);
       toast({
