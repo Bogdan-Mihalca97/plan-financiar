@@ -3,19 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFamily } from '@/contexts/FamilyContext';
-
-export interface Transaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  type: 'income' | 'expense';
-  category: string;
-  description: string;
-  date: string;
-  created_at: string;
-  updated_at: string;
-  family_group_id?: string;
-}
+import { Transaction } from '@/types/transaction';
 
 interface TransactionsContextType {
   transactions: Transaction[];
@@ -23,6 +11,16 @@ interface TransactionsContextType {
   allTransactions: Transaction[];
   loading: boolean;
   refreshTransactions: () => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  getTotalIncome: () => number;
+  getTotalExpenses: () => number;
+  getBalance: () => number;
+  getMonthlyIncome: () => number;
+  getMonthlyExpenses: () => number;
+  getMonthlyBalance: () => number;
+  getTransactionsByCategory: () => { [key: string]: number };
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -44,7 +42,7 @@ export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       console.log('Fetching transactions for user:', user.id);
       
-      // Fetch personal transactions (without family_group_id or user's own family transactions)
+      // Fetch personal transactions
       const { data: personalTransactions, error: personalError } = await supabase
         .from('transactions')
         .select('*')
@@ -57,7 +55,7 @@ export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       console.log('Fetched personal transactions:', personalTransactions);
-      setTransactions(personalTransactions || []);
+      setTransactions((personalTransactions || []) as Transaction[]);
 
       // Fetch family transactions if user is part of a family
       if (currentFamily) {
@@ -71,10 +69,9 @@ export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         if (familyError) {
           console.error('Error fetching family transactions:', familyError);
-          console.log('Family error details:', familyError);
         } else {
           console.log('Fetched family transactions:', familyTxns);
-          setFamilyTransactions(familyTxns || []);
+          setFamilyTransactions((familyTxns || []) as Transaction[]);
         }
       } else {
         console.log('No family found, skipping family transactions');
@@ -94,12 +91,103 @@ export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const allTransactions = [...transactions, ...familyTransactions];
 
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>) => {
+    const { error } = await supabase
+      .from('transactions')
+      .insert([transaction]);
+
+    if (error) throw error;
+    await fetchTransactions();
+  };
+
+  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
+    const { error } = await supabase
+      .from('transactions')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) throw error;
+    await fetchTransactions();
+  };
+
+  const deleteTransaction = async (id: string) => {
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    await fetchTransactions();
+  };
+
+  const getTotalIncome = () => {
+    return allTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getTotalExpenses = () => {
+    return allTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getBalance = () => getTotalIncome() - getTotalExpenses();
+
+  const getMonthlyIncome = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    return allTransactions
+      .filter(t => {
+        const date = new Date(t.date);
+        return t.type === 'income' && 
+               date.getMonth() === currentMonth && 
+               date.getFullYear() === currentYear;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getMonthlyExpenses = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    return allTransactions
+      .filter(t => {
+        const date = new Date(t.date);
+        return t.type === 'expense' && 
+               date.getMonth() === currentMonth && 
+               date.getFullYear() === currentYear;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getMonthlyBalance = () => getMonthlyIncome() - getMonthlyExpenses();
+
+  const getTransactionsByCategory = () => {
+    return allTransactions.reduce((acc, transaction) => {
+      const category = transaction.category;
+      acc[category] = (acc[category] || 0) + transaction.amount;
+      return acc;
+    }, {} as { [key: string]: number });
+  };
+
   const value: TransactionsContextType = {
     transactions,
     familyTransactions,
     allTransactions,
     loading,
     refreshTransactions: fetchTransactions,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    getTotalIncome,
+    getTotalExpenses,
+    getBalance,
+    getMonthlyIncome,
+    getMonthlyExpenses,
+    getMonthlyBalance,
+    getTransactionsByCategory,
   };
 
   return (

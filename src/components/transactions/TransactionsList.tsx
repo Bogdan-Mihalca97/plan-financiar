@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,21 +9,21 @@ import { Transaction } from "@/types/transaction";
 
 interface TransactionsListProps {
   transactions: Transaction[];
-  onTransactionUpdated: (transaction: Transaction) => void;
-  onTransactionDeleted: (transactionId: string) => void;
+  onTransactionUpdated: () => void;
+  onTransactionDeleted: () => void;
 }
 
 const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDeleted }: TransactionsListProps) => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  const handleUpdateTransaction = (updatedTransaction: Transaction) => {
-    onTransactionUpdated(updatedTransaction);
+  const handleUpdateTransaction = () => {
+    onTransactionUpdated();
     setEditingTransaction(null);
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
     if (window.confirm("Ești sigur că vrei să ștergi această tranzacție?")) {
-      onTransactionDeleted(transactionId);
+      onTransactionDeleted();
     }
   };
 

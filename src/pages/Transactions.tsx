@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useFamily } from '@/contexts/FamilyContext';
@@ -55,7 +56,7 @@ const Transactions = () => {
               )}
             </p>
           </div>
-          <AddTransactionForm onTransactionAdded={refreshTransactions} />
+          <AddTransactionForm />
         </div>
 
         {currentFamily && familyTransactions.length > 0 && (
