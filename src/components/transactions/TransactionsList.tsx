@@ -96,7 +96,7 @@ const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDel
                   <span className={`font-semibold ${
                     transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {transaction.type === 'income' ? '+' : '-'}{Math.abs(transaction.amount).toFixed(2)} RON
+                    {transaction.type === 'income' ? '+' : '-'}{Math.abs(transaction.amount).toFixed(2)} Lei
                   </span>
                   <div className="flex space-x-2">
                     <Button
@@ -119,7 +119,7 @@ const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDel
                         <AlertDialogHeader>
                           <AlertDialogTitle>Șterge Tranzacția</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Ești sigur că vrei să ștergi tranzacția "{transaction.description}" în valoare de {Math.abs(transaction.amount).toFixed(2)} RON?
+                            Ești sigur că vrei să ștergi tranzacția "{transaction.description}" în valoare de {Math.abs(transaction.amount).toFixed(2)} Lei?
                             Această acțiune nu poate fi anulată.
                           </AlertDialogDescription>
                         </AlertDialogHeader>

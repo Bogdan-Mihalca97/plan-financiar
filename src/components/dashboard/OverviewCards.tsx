@@ -21,11 +21,9 @@ const OverviewCards = ({
 }: OverviewCardsProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ro-RO', {
-      style: 'currency',
-      currency: 'RON',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount) + ' Lei';
   };
 
   return (
