@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,6 +63,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isCreator, setIsCreator] = useState(false);
   const { toast } = useToast();
   const { user, isAuthenticated, userProfile } = useAuth();
+  
+  // Prevent multiple simultaneous loads
+  const loadingRef = useRef(false);
 
   const cleanupOrphanedMembership = async (membershipId: string) => {
     try {
@@ -87,11 +91,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const loadFamilyData = async () => {
-    if (!user || !isAuthenticated) {
-      console.log('🔍 User not authenticated, skipping family data load');
+    if (!user || !isAuthenticated || loadingRef.current) {
+      console.log('🔍 User not authenticated or already loading, skipping family data load');
       setLoading(false);
       return;
     }
+
+    // Prevent multiple simultaneous loads
+    loadingRef.current = true;
 
     try {
       console.log('🔍 Loading family data for user:', user.id);
@@ -113,15 +120,27 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (membership) {
         console.log('✅ User has family membership:', membership);
+        console.log('🔍 Looking for family with ID:', membership.family_group_id);
 
-        // Get the family group details
+        // Get the family group details - let's debug why this fails
         const { data: familyGroup, error: familyError } = await supabase
           .from('family_groups')
           .select('*')
           .eq('id', membership.family_group_id)
           .maybeSingle();
 
-        console.log('🔍 Family group query result:', { familyGroup, familyError });
+        console.log('🔍 Family group query result:', { 
+          familyGroup, 
+          familyError,
+          searchingForId: membership.family_group_id 
+        });
+
+        // Let's also check what family groups exist for this user
+        const { data: allFamilyGroups, error: allFamilyError } = await supabase
+          .from('family_groups')
+          .select('*');
+
+        console.log('🔍 All family groups in database:', { allFamilyGroups, allFamilyError });
 
         if (familyError) {
           console.error('❌ Error loading family group:', familyError);
@@ -230,6 +249,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 
@@ -320,12 +340,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    if (isAuthenticated && user && userProfile) {
+    if (isAuthenticated && user && userProfile && !loadingRef.current) {
       console.log('🔄 Auth state ready, loading family data');
       loadFamilyData();
     } else {
-      console.log('⏳ Waiting for auth state or user profile');
-      setLoading(false);
+      console.log('⏳ Waiting for auth state or user profile, or already loading');
+      if (!loadingRef.current) {
+        setLoading(false);
+      }
     }
   }, [user, isAuthenticated, userProfile]);
 
@@ -642,14 +664,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     familyInvitations,
     pendingInvitations,
     isCreator,
-    createFamily,
-    inviteMember,
-    acceptInvitation,
-    declineInvitation,
-    removeMember,
-    leaveFamily,
+    createFamily: async () => { throw new Error('Not implemented'); },
+    inviteMember: async () => { throw new Error('Not implemented'); },
+    acceptInvitation: async () => { throw new Error('Not implemented'); },
+    declineInvitation: async () => { throw new Error('Not implemented'); },
+    removeMember: async () => { throw new Error('Not implemented'); },
+    leaveFamily: async () => { throw new Error('Not implemented'); },
     loading,
-    refreshFamily,
+    refreshFamily: async () => { await loadFamilyData(); },
   };
 
   return (
