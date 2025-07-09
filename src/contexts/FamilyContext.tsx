@@ -291,22 +291,30 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             console.log('🔍 Family for invitation:', family);
 
-            // Get inviter name
-            const { data: inviterProfile } = await supabase
+            // Get inviter name with better debugging
+            const { data: inviterProfile, error: inviterError } = await supabase
               .from('profiles')
-              .select('first_name, last_name')
+              .select('first_name, last_name, email')
               .eq('id', invitation.invited_by)
               .maybeSingle();
 
-            console.log('🔍 Inviter profile:', inviterProfile);
+            console.log('🔍 Inviter profile query:', { 
+              inviterId: invitation.invited_by, 
+              inviterProfile, 
+              inviterError 
+            });
+
+            const inviterName = inviterProfile 
+              ? `${inviterProfile.first_name || ''} ${inviterProfile.last_name || ''}`.trim() || inviterProfile.email || 'Administrator'
+              : 'Administrator';
+
+            console.log('🔍 Final inviter name:', inviterName);
 
             enrichedInvitations.push({
               ...invitation,
               status: invitation.status as 'pending' | 'accepted' | 'declined',
               family_name: family?.name || 'Familie necunoscută',
-              inviter_name: inviterProfile 
-                ? `${inviterProfile.first_name} ${inviterProfile.last_name}`.trim()
-                : 'Administrator'
+              inviter_name: inviterName
             });
           } catch (error) {
             console.error('❌ Error enriching invitation:', error);
