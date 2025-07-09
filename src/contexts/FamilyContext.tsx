@@ -66,13 +66,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const loadFamilyData = async () => {
     if (!user || !isAuthenticated) {
-      console.log('User not authenticated, skipping family data load');
+      console.log('🔍 User not authenticated, skipping family data load');
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Loading family data for user:', user.id);
+      console.log('🔍 Loading family data for user:', user.id);
+      console.log('🔍 User profile:', userProfile);
 
       // Get user's family membership
       const { data: membership, error: membershipError } = await supabase
@@ -81,29 +82,36 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .eq('user_id', user.id)
         .maybeSingle();
 
+      console.log('🔍 Membership query result:', { membership, membershipError });
+
       if (membershipError) {
-        console.error('Error loading family membership:', membershipError);
+        console.error('❌ Error loading family membership:', membershipError);
         throw membershipError;
       }
 
       if (membership) {
-        // Get the family group details using maybeSingle to avoid single() errors
+        console.log('✅ User has family membership:', membership);
+
+        // Get the family group details
         const { data: familyGroup, error: familyError } = await supabase
           .from('family_groups')
           .select('*')
           .eq('id', membership.family_group_id)
           .maybeSingle();
 
+        console.log('🔍 Family group query result:', { familyGroup, familyError });
+
         if (familyError) {
-          console.error('Error loading family group:', familyError);
+          console.error('❌ Error loading family group:', familyError);
           throw familyError;
         }
 
         if (!familyGroup) {
-          console.error('Family group not found for membership:', membership);
+          console.error('❌ Family group not found for membership:', membership);
           throw new Error('Familie nu a fost găsită');
         }
 
+        console.log('✅ Family group loaded:', familyGroup);
         setCurrentFamily(familyGroup);
         setIsCreator(membership.role === 'admin');
 
@@ -113,8 +121,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           .select('*')
           .eq('family_group_id', familyGroup.id);
 
+        console.log('🔍 All memberships query result:', { allMemberships, membersError });
+
         if (membersError) {
-          console.error('Error loading family members:', membersError);
+          console.error('❌ Error loading family members:', membersError);
         } else if (allMemberships) {
           // Get user profiles for each member
           const memberProfiles: FamilyMember[] = [];
@@ -134,26 +144,30 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 is_creator: member.role === 'admin',
               });
             } catch (profileError) {
-              console.error('Error loading profile for user:', member.user_id, profileError);
+              console.error('❌ Error loading profile for user:', member.user_id, profileError);
               memberProfiles.push({
                 ...member,
                 is_creator: member.role === 'admin',
               });
             }
           }
+          console.log('✅ Member profiles loaded:', memberProfiles);
           setFamilyMembers(memberProfiles);
         }
 
         // Load pending invitations if user is admin
         if (membership.role === 'admin') {
+          console.log('🔍 Loading invitations for admin user');
           const { data: invitations, error: invitationsError } = await supabase
             .from('family_invitations')
             .select('*')
             .eq('family_group_id', familyGroup.id)
             .eq('status', 'pending');
 
+          console.log('🔍 Admin invitations query result:', { invitations, invitationsError });
+
           if (invitationsError) {
-            console.error('Error loading invitations:', invitationsError);
+            console.error('❌ Error loading invitations:', invitationsError);
           } else if (invitations) {
             setFamilyInvitations(invitations.map(inv => ({
               ...inv,
@@ -163,12 +177,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else {
         // No family membership found - check for pending invitations
-        console.log('No family membership found, checking for pending invitations...');
+        console.log('🔍 No family membership found, checking for pending invitations...');
         
         if (userProfile?.email) {
-          console.log('Checking invitations for email:', userProfile.email);
+          console.log('🔍 User email from profile:', userProfile.email);
           
-          // Simplified query without problematic joins  
+          // Check for pending invitations using the email from profile
           const { data: pendingInvitations, error: pendingError } = await supabase
             .from('family_invitations')
             .select('*')
@@ -176,17 +190,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             .eq('status', 'pending')
             .gt('expires_at', new Date().toISOString());
 
-          console.log('Pending invitations query result:', { pendingInvitations, pendingError });
+          console.log('🔍 Pending invitations query result:', { 
+            email: userProfile.email.toLowerCase(),
+            pendingInvitations, 
+            pendingError 
+          });
 
           if (pendingError) {
-            console.error('Error loading pending invitations:', pendingError);
+            console.error('❌ Error loading pending invitations:', pendingError);
           } else if (pendingInvitations && pendingInvitations.length > 0) {
-            console.log('Found pending invitations for user:', pendingInvitations);
+            console.log('✅ Found pending invitations:', pendingInvitations);
             
             // Get additional details for each invitation
             const enrichedInvitations = [];
             for (const invitation of pendingInvitations) {
               try {
+                console.log('🔍 Enriching invitation:', invitation.id);
+                
                 // Get family name
                 const { data: family } = await supabase
                   .from('family_groups')
@@ -194,12 +214,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                   .eq('id', invitation.family_group_id)
                   .maybeSingle();
 
+                console.log('🔍 Family for invitation:', family);
+
                 // Get inviter name
                 const { data: inviterProfile } = await supabase
                   .from('profiles')
                   .select('first_name, last_name')
                   .eq('id', invitation.invited_by)
                   .maybeSingle();
+
+                console.log('🔍 Inviter profile:', inviterProfile);
 
                 enrichedInvitations.push({
                   ...invitation,
@@ -210,7 +234,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     : 'Administrator'
                 });
               } catch (error) {
-                console.error('Error enriching invitation:', error);
+                console.error('❌ Error enriching invitation:', error);
                 enrichedInvitations.push({
                   ...invitation,
                   status: invitation.status as 'pending' | 'accepted' | 'declined',
@@ -220,19 +244,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               }
             }
 
+            console.log('✅ Enriched invitations:', enrichedInvitations);
             setPendingInvitations(enrichedInvitations);
 
             // Show notification for pending invitations
-            toast({
-              title: "Invitații în așteptare",
-              description: `Ai ${pendingInvitations.length} invitație${pendingInvitations.length > 1 ? 'i' : ''} de alăturare la familie în așteptare.`,
-            });
+            if (enrichedInvitations.length > 0) {
+              toast({
+                title: "Invitații în așteptare",
+                description: `Ai ${enrichedInvitations.length} invitație${enrichedInvitations.length > 1 ? 'i' : ''} de alăturare la familie în așteptare.`,
+              });
+            }
           } else {
-            console.log('No pending invitations found');
+            console.log('ℹ️ No pending invitations found');
             setPendingInvitations([]);
           }
         } else {
-          console.log('No user email found in profile');
+          console.log('⚠️ No user email found in profile');
+          setPendingInvitations([]);
         }
 
         setCurrentFamily(null);
@@ -241,7 +269,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsCreator(false);
       }
     } catch (error: any) {
-      console.error('Error loading family data:', error);
+      console.error('❌ Error loading family data:', error);
       toast({
         title: "Eroare",
         description: "Nu s-au putut încărca datele familiei",
@@ -254,8 +282,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (isAuthenticated && user && userProfile) {
+      console.log('🔄 Auth state ready, loading family data');
       loadFamilyData();
     } else {
+      console.log('⏳ Waiting for auth state or user profile');
       setLoading(false);
     }
   }, [user, isAuthenticated, userProfile]);
@@ -411,7 +441,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       if (!user) throw new Error('Nu ești autentificat');
 
-      console.log('Accepting invitation:', invitationId);
+      console.log('🔄 Accepting invitation:', invitationId);
 
       const { data: invitation } = await supabase
         .from('family_invitations')
@@ -421,7 +451,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!invitation) throw new Error('Invitația nu a fost găsită');
 
-      console.log('Found invitation:', invitation);
+      console.log('✅ Found invitation:', invitation);
 
       // Check if user is already a member
       const { data: existingMembership } = await supabase
@@ -432,6 +462,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .maybeSingle();
 
       if (existingMembership) {
+        console.log('⚠️ User already member of family');
         throw new Error('Ești deja membru al acestei familii');
       }
 
@@ -445,9 +476,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }]);
 
       if (memberError) {
-        console.error('Error creating membership:', memberError);
+        console.error('❌ Error creating membership:', memberError);
         throw new Error('Nu s-a putut crea apartenența la familie');
       }
+
+      console.log('✅ Membership created successfully');
 
       // Update invitation status
       const { error: invitationError } = await supabase
@@ -456,7 +489,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .eq('id', invitationId);
 
       if (invitationError) {
-        console.error('Error updating invitation:', invitationError);
+        console.error('⚠️ Error updating invitation:', invitationError);
       }
 
       toast({
@@ -467,13 +500,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Clear pending invitations and reload family data
       setPendingInvitations([]);
       
-      // Add a small delay to ensure the database is updated
-      setTimeout(async () => {
-        await loadFamilyData();
-      }, 1000);
+      console.log('🔄 Reloading family data after accepting invitation');
+      // Reload immediately without delay
+      await loadFamilyData();
       
     } catch (error: any) {
-      console.error('Error accepting invitation:', error);
+      console.error('❌ Error accepting invitation:', error);
       toast({
         title: "Eroare",
         description: error.message || "Nu s-a putut accepta invitația",
