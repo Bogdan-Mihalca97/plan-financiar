@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,39 +41,51 @@ export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       console.log('Fetching transactions for user:', user.id);
       
-      // Fetch personal transactions
-      const { data: personalTransactions, error: personalError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-
-      if (personalError) {
-        console.error('Error fetching personal transactions:', personalError);
-        throw personalError;
-      }
-
-      console.log('Fetched personal transactions:', personalTransactions);
-      setTransactions((personalTransactions || []) as Transaction[]);
-
-      // Fetch family transactions if user is part of a family
       if (currentFamily) {
+        // If user is part of a family, fetch all transactions for the family (includes personal ones)
         console.log('Fetching family transactions for family:', currentFamily.id);
         
-        const { data: familyTxns, error: familyError } = await supabase
+        const { data: allFamilyTransactions, error: familyError } = await supabase
           .from('transactions')
           .select('*')
-          .eq('family_group_id', currentFamily.id)
+          .or(`user_id.eq.${user.id},family_group_id.eq.${currentFamily.id}`)
           .order('date', { ascending: false });
 
         if (familyError) {
           console.error('Error fetching family transactions:', familyError);
-        } else {
-          console.log('Fetched family transactions:', familyTxns);
-          setFamilyTransactions((familyTxns || []) as Transaction[]);
+          throw familyError;
         }
+
+        console.log('Fetched all transactions:', allFamilyTransactions);
+        
+        // Separate personal and family transactions
+        const userPersonalTransactions = (allFamilyTransactions || []).filter(
+          t => t.user_id === user.id && !t.family_group_id
+        );
+        const familySharedTransactions = (allFamilyTransactions || []).filter(
+          t => t.family_group_id === currentFamily.id
+        );
+
+        setTransactions(userPersonalTransactions as Transaction[]);
+        setFamilyTransactions(familySharedTransactions as Transaction[]);
       } else {
-        console.log('No family found, skipping family transactions');
+        // If user is not part of a family, fetch only personal transactions
+        console.log('No family found, fetching only personal transactions');
+        
+        const { data: personalTransactions, error: personalError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .is('family_group_id', null)
+          .order('date', { ascending: false });
+
+        if (personalError) {
+          console.error('Error fetching personal transactions:', personalError);
+          throw personalError;
+        }
+
+        console.log('Fetched personal transactions:', personalTransactions);
+        setTransactions((personalTransactions || []) as Transaction[]);
         setFamilyTransactions([]);
       }
 
