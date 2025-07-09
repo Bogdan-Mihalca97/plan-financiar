@@ -21,14 +21,24 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('Starting send-invitation-email function');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    console.log('Resend API key exists:', !!resendApiKey);
+    
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY is not configured');
+    }
+
+    const resend = new Resend(resendApiKey);
 
     const { email, familyName, inviterName, invitationId }: InvitationEmailRequest = await req.json();
+    console.log('Request data:', { email, familyName, inviterName, invitationId });
 
     // Use the correct site URL - get it from the request headers or environment
     const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'https://izsvgmgivjpyjuxtesl.supabase.co';
@@ -37,6 +47,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Generated invitation URL:', invitationUrl);
 
     // Send email using Resend
+    console.log('Attempting to send email to:', email);
+    
     const emailResponse = await resend.emails.send({
       from: 'BugetControl <onboarding@resend.dev>',
       to: [email],
@@ -91,22 +103,34 @@ const handler = async (req: Request): Promise<Response> => {
       `
     });
 
-    console.log('Email sent successfully via Resend:', emailResponse);
+    console.log('Resend response:', JSON.stringify(emailResponse, null, 2));
+
+    if (emailResponse.error) {
+      console.error('Resend error:', emailResponse.error);
+      throw new Error(`Resend error: ${JSON.stringify(emailResponse.error)}`);
+    }
+
+    console.log('Email sent successfully via Resend');
 
     // Mark invitation as email sent
-    await supabaseClient
+    const { error: updateError } = await supabaseClient
       .from('family_invitations')
       .update({ 
         status: 'pending' // Keep as pending, but we know email was sent
       })
       .eq('id', invitationId);
 
+    if (updateError) {
+      console.error('Error updating invitation status:', updateError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Invitation email sent successfully',
         emailId: emailResponse.data?.id,
-        invitationUrl: invitationUrl
+        invitationUrl: invitationUrl,
+        emailData: emailResponse.data
       }),
       {
         status: 200,
@@ -116,10 +140,13 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error('Error in send-invitation-email function:', error);
+    console.error('Error stack:', error.stack);
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'Failed to send invitation email' 
+        details: 'Failed to send invitation email',
+        stack: error.stack
       }),
       {
         status: 500,
