@@ -80,14 +80,10 @@ const Index = () => {
 
         {/* Stats */}
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
+          <div className="grid md:grid-cols-2 gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-indigo-600 mb-2">10.000+</div>
               <div className="text-gray-600">Utilizatori Activi</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600 mb-2">5M+ Lei</div>
-              <div className="text-gray-600">Bani Economisiți</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-purple-600 mb-2">95%</div>
