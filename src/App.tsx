@@ -14,6 +14,7 @@ import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import DataFlow from "./pages/DataFlow";
 import UMLDiagrams from "./pages/UMLDiagrams";
+import InvitationAcceptance from "./pages/InvitationAcceptance";
 import { Toaster } from "@/components/ui/toaster"
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/invitation/:invitationId" element={<InvitationAcceptance />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/transactions" element={<Transactions />} />

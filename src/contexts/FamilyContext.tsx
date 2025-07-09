@@ -152,7 +152,26 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         }
       } else {
-        // No family membership found
+        // No family membership found - check for pending invitations
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+
+        if (userProfile?.email) {
+          const { data: pendingInvitations } = await supabase
+            .from('family_invitations')
+            .select('*')
+            .eq('email', userProfile.email)
+            .eq('status', 'pending');
+
+          if (pendingInvitations && pendingInvitations.length > 0) {
+            console.log('Found pending invitations for user:', pendingInvitations);
+            // You could show a notification or redirect to invitation page
+          }
+        }
+
         setCurrentFamily(null);
         setFamilyMembers([]);
         setFamilyInvitations([]);
@@ -277,11 +296,50 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       console.log('Invitation created successfully:', data);
-      
-      toast({
-        title: "Succes",
-        description: "Invitația a fost trimisă cu succes",
-      });
+
+      // Send invitation email
+      try {
+        const { data: inviterProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user.id)
+          .single();
+
+        const inviterName = inviterProfile 
+          ? `${inviterProfile.first_name} ${inviterProfile.last_name}`.trim()
+          : 'Un membru al familiei';
+
+        const response = await supabase.functions.invoke('send-invitation-email', {
+          body: {
+            email: email.toLowerCase().trim(),
+            familyName: currentFamily.name,
+            inviterName,
+            invitationId: data.id
+          }
+        });
+
+        if (response.error) {
+          console.error('Error sending invitation email:', response.error);
+          // Don't throw error here - invitation was created successfully
+          toast({
+            title: "Invitație creată",
+            description: "Invitația a fost creată, dar emailul nu a putut fi trimis. Utilizatorul poate accesa invitația direct.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Invitation email sent successfully');
+          toast({
+            title: "Succes",
+            description: "Invitația a fost trimisă cu succes prin email",
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        toast({
+          title: "Invitație creată",
+          description: "Invitația a fost creată, dar emailul nu a putut fi trimis. Utilizatorul poate accesa invitația direct.",
+        });
+      }
 
       await loadFamilyData();
     } catch (error: any) {
