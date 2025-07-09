@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [
-  { name: "Alimentare", value: 650, color: "#ef4444" },
+  { name: "Cumpărături", value: 650, color: "#ef4444" },
   { name: "Transport", value: 320, color: "#f97316" },
   { name: "Divertisment", value: 380, color: "#eab308" },
   { name: "Utilități", value: 450, color: "#22c55e" },
