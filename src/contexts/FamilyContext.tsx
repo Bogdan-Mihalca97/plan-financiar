@@ -32,12 +32,15 @@ export interface FamilyInvitation {
   status: 'pending' | 'accepted' | 'declined';
   created_at: string;
   expires_at: string;
+  family_name?: string;
+  inviter_name?: string;
 }
 
 interface FamilyContextType {
   currentFamily: FamilyGroup | null;
   familyMembers: FamilyMember[];
   familyInvitations: FamilyInvitation[];
+  pendingInvitations: FamilyInvitation[];
   isCreator: boolean;
   createFamily: (name: string) => Promise<FamilyGroup>;
   inviteMember: (email: string) => Promise<void>;
@@ -55,10 +58,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [currentFamily, setCurrentFamily] = useState<FamilyGroup | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [familyInvitations, setFamilyInvitations] = useState<FamilyInvitation[]>([]);
+  const [pendingInvitations, setPendingInvitations] = useState<FamilyInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, userProfile } = useAuth();
 
   const loadFamilyData = async () => {
     if (!user || !isAuthenticated) {
@@ -154,21 +158,39 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else {
         // No family membership found - check for pending invitations
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', user.id)
-          .single();
-
         if (userProfile?.email) {
-          const { data: pendingInvitations } = await supabase
+          const { data: pendingInvitations, error: pendingError } = await supabase
             .from('family_invitations')
-            .select('*')
+            .select(`
+              *,
+              family_groups!inner(name),
+              inviter_profiles:profiles!family_invitations_invited_by_fkey(first_name, last_name)
+            `)
             .eq('email', userProfile.email)
-            .eq('status', 'pending');
+            .eq('status', 'pending')
+            .gt('expires_at', new Date().toISOString());
 
-          if (pendingInvitations && pendingInvitations.length > 0) {
+          if (pendingError) {
+            console.error('Error loading pending invitations:', pendingError);
+          } else if (pendingInvitations && pendingInvitations.length > 0) {
             console.log('Found pending invitations for user:', pendingInvitations);
+            
+            const formattedInvitations = pendingInvitations.map(inv => ({
+              ...inv,
+              status: inv.status as 'pending' | 'accepted' | 'declined',
+              family_name: (inv as any).family_groups?.name || 'Familie necunoscută',
+              inviter_name: (inv as any).inviter_profiles 
+                ? `${(inv as any).inviter_profiles.first_name} ${(inv as any).inviter_profiles.last_name}`.trim()
+                : 'Administrator'
+            }));
+
+            setPendingInvitations(formattedInvitations);
+
+            // Show notification for pending invitations
+            toast({
+              title: "Invitații în așteptare",
+              description: `Ai ${pendingInvitations.length} invitație${pendingInvitations.length > 1 ? 'i' : ''} de alăturare la familie în așteptare.`,
+            });
           }
         }
 
@@ -190,12 +212,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && userProfile) {
       loadFamilyData();
     } else {
       setLoading(false);
     }
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, userProfile]);
 
   const createFamily = async (name: string) => {
     if (!user || !isAuthenticated) {
@@ -280,15 +302,36 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('Inviting member:', email, 'to family:', currentFamily.id);
 
       // Check if user already exists in family
-      const { data: existingMember } = await supabase
-        .from('family_memberships')
-        .select('*')
-        .eq('family_group_id', currentFamily.id)
-        .eq('user_id', (await supabase.from('profiles').select('id').eq('email', email.toLowerCase().trim()).maybeSingle())?.data?.id || 'none')
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email.toLowerCase().trim())
         .maybeSingle();
 
-      if (existingMember) {
-        throw new Error('Acest utilizator este deja membru al familiei');
+      if (existingProfile) {
+        const { data: existingMember } = await supabase
+          .from('family_memberships')
+          .select('*')
+          .eq('family_group_id', currentFamily.id)
+          .eq('user_id', existingProfile.id)
+          .maybeSingle();
+
+        if (existingMember) {
+          throw new Error('Acest utilizator este deja membru al familiei');
+        }
+      }
+
+      // Check if invitation already exists
+      const { data: existingInvitation } = await supabase
+        .from('family_invitations')
+        .select('*')
+        .eq('family_group_id', currentFamily.id)
+        .eq('email', email.toLowerCase().trim())
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      if (existingInvitation) {
+        throw new Error('Această adresă de email a fost deja invitată');
       }
 
       const { data, error } = await supabase
@@ -303,11 +346,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (error) {
         console.error('Error inviting member:', error);
-        
-        if (error.code === '23505') {
-          throw new Error('Această adresă de email a fost deja invitată');
-        }
-        
         throw new Error(error.message || 'Eroare la trimiterea invitației');
       }
 
@@ -338,8 +376,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.error('Error sending invitation email:', response.error);
           toast({
             title: "Invitație creată",
-            description: "Invitația a fost creată, dar emailul nu a putut fi trimis. Utilizatorul poate accesa invitația direct.",
-            variant: "destructive",
+            description: "Invitația a fost creată, dar emailul nu a putut fi trimis. Utilizatorul va primi notificarea când se va loga.",
           });
         } else {
           console.log('Invitation email sent successfully');
@@ -352,7 +389,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.error('Error sending invitation email:', emailError);
         toast({
           title: "Invitație creată",
-          description: "Invitația a fost creată, dar emailul nu a putut fi trimis. Utilizatorul poate accesa invitația direct.",
+          description: "Invitația a fost creată. Utilizatorul va primi notificarea când se va loga.",
         });
       }
 
@@ -439,7 +476,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: "Invitația a fost refuzată",
       });
 
-      await loadFamilyData();
+      // Remove from pending invitations
+      setPendingInvitations(prev => prev.filter(inv => inv.id !== invitationId));
     } catch (error) {
       console.error('Error declining invitation:', error);
       toast({
@@ -515,6 +553,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     currentFamily,
     familyMembers,
     familyInvitations,
+    pendingInvitations,
     isCreator,
     createFamily,
     inviteMember,
