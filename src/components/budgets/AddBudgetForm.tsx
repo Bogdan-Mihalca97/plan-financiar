@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 
 interface AddBudgetFormProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const AddBudgetForm = ({ isOpen, onClose }: AddBudgetFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentFamily } = useFamily();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,8 @@ const AddBudgetForm = ({ isOpen, onClose }: AddBudgetFormProps) => {
             user_id: user.id,
             category,
             limit_amount: parseFloat(limit),
-            period
+            period,
+            family_group_id: currentFamily?.id || null
           }
         ]);
 

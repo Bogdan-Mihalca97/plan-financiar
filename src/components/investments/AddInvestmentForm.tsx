@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 import TickerSearch from "./TickerSearch";
 
 interface AddInvestmentFormProps {
@@ -37,6 +39,8 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { currentFamily } = useFamily();
 
   const investmentTypes = [
     "Acțiuni",
@@ -78,12 +82,18 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Eroare",
+        description: "Trebuie să fii conectat pentru a adăuga o investiție",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Utilizatorul nu este autentificat');
-
       const { error } = await supabase.from('investments').insert({
         user_id: user.id,
         name: formData.name,

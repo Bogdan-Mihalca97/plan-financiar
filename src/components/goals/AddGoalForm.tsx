@@ -10,6 +10,7 @@ import { Calendar, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 
 interface AddGoalFormProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ const AddGoalForm = ({ isOpen, onClose }: AddGoalFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentFamily } = useFamily();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +58,8 @@ const AddGoalForm = ({ isOpen, onClose }: AddGoalFormProps) => {
             current_amount: parseFloat(formData.currentAmount) || 0,
             deadline: formData.deadline,
             category: formData.category || null,
-            priority: formData.priority || null
+            priority: formData.priority || null,
+            family_group_id: currentFamily?.id || null
           }
         ]);
 
