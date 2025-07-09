@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, PiggyBank, Trophy, DollarSign } from "lucide-react";
+import { Plus, Target, PiggyBank, Trophy, DollarSign, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,48 +121,6 @@ const BudgetsAndGoals = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Buget Total</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalBudget.toFixed(2)} Lei</div>
-              <p className="text-xs text-muted-foreground">
-                Cheltuit: {totalSpent.toFixed(2)} Lei
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Obiective</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{goals.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Complete: {completedGoals}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Progres Economii</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalCurrentAmount.toFixed(2)} Lei</div>
-              <p className="text-xs text-muted-foreground">
-                Țintă: {totalTargetAmount.toFixed(2)} Lei
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
         <Tabs defaultValue="budgets" className="w-full">
           <div className="flex justify-between items-center mb-6">
             <TabsList className="grid w-[400px] grid-cols-2">
@@ -174,14 +132,57 @@ const BudgetsAndGoals = () => {
                 <Plus className="h-4 w-4" />
                 Adaugă Buget
               </Button>
-              <Button onClick={() => setShowAddGoalForm(true)} className="flex items-center gap-2">
+              <Button onClick={() => setShowAddGoalForm(true)} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900">
                 <Plus className="h-4 w-4" />
                 Adaugă Obiectiv
               </Button>
             </div>
           </div>
 
-          <TabsContent value="budgets" className="space-y-4">
+          <TabsContent value="budgets" className="space-y-6">
+            {/* Summary Cards for Budgets */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-white border-l-4 border-l-blue-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Buget Total</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{totalBudget.toFixed(2)} Lei</div>
+                  <p className="text-xs text-gray-500 mt-1">Limită stabilită</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-orange-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Cheltuieli Actuale</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{totalSpent.toFixed(2)} Lei</div>
+                  <p className="text-xs text-gray-500 mt-1">Din bugetele active</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-green-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Rămase</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{(totalBudget - totalSpent).toFixed(2)} Lei</div>
+                  <p className="text-xs text-gray-500 mt-1">Disponibil pentru cheltuieli</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-purple-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Starea</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(1) : 0}%</div>
+                  <p className="text-xs text-gray-500 mt-1">Din buget utilizat</p>
+                </CardContent>
+              </Card>
+            </div>
+
             {budgets.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {budgets.map((budget) => {
@@ -191,40 +192,55 @@ const BudgetsAndGoals = () => {
                   const remaining = budget.limit_amount - spent;
                   
                   return (
-                    <Card key={budget.id} className={isOverBudget ? 'border-red-200 bg-red-50' : ''}>
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span>{budget.category}</span>
-                          <span className="text-sm font-normal text-gray-500">
+                    <Card key={budget.id} className="bg-white shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-gray-200">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg font-semibold text-gray-900">{budget.category}</CardTitle>
+                          <span className={`text-xs px-2 py-1 rounded-full ${budget.period === 'monthly' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
                             {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
                           </span>
-                        </CardTitle>
+                        </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-500">Limită</p>
+                            <p className="font-semibold text-gray-900">{budget.limit_amount.toFixed(2)} Lei</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Cheltuit</p>
+                            <p className="font-semibold text-gray-900">{spent.toFixed(2)} Lei</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Rămas</p>
+                            <p className={`font-semibold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {remaining.toFixed(2)} Lei
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Progres</p>
+                            <p className={`font-semibold ${isOverBudget ? 'text-red-600' : percentage >= 75 ? 'text-orange-600' : 'text-green-600'}`}>
+                              {percentage.toFixed(1)}%
+                            </p>
+                          </div>
+                        </div>
+                        
                         <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Limită: {budget.limit_amount.toFixed(2)} Lei</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Cheltuit: {spent.toFixed(2)} Lei</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className={remaining < 0 ? 'text-red-600' : 'text-green-600'}>
-                              Rămas: {remaining.toFixed(2)} Lei
-                            </span>
-                          </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full transition-all ${
                                 isOverBudget ? 'bg-red-500' : 
-                                percentage >= 75 ? 'bg-yellow-500' : 'bg-green-500'
+                                percentage >= 75 ? 'bg-orange-500' : 'bg-green-500'
                               }`}
                               style={{ width: `${Math.min(percentage, 100)}%` }}
                             />
                           </div>
-                          <p className={`text-xs text-center ${isOverBudget ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
-                            {percentage.toFixed(1)}% utilizat
-                          </p>
+                          {isOverBudget && (
+                            <div className="flex items-center gap-1 text-red-600 text-xs">
+                              <AlertTriangle className="h-3 w-3" />
+                              <span>Buget depășit cu {(percentage - 100).toFixed(1)}%</span>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -247,33 +263,98 @@ const BudgetsAndGoals = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="goals" className="space-y-4">
+          <TabsContent value="goals" className="space-y-6">
+            {/* Summary Cards for Goals */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-white border-l-4 border-l-blue-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Total Obiective</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{goals.length}</div>
+                  <p className="text-xs text-gray-500 mt-1">Obiective active</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-green-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Progres Total</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {totalTargetAmount > 0 ? ((totalCurrentAmount / totalTargetAmount) * 100).toFixed(1) : 0}%
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Din țintele stabilite</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-yellow-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Obiective Complete</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{completedGoals}</div>
+                  <p className="text-xs text-gray-500 mt-1">Din {goals.length} total</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-purple-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">Suma Economisită</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">{totalCurrentAmount.toFixed(2)} Lei</div>
+                  <p className="text-xs text-gray-500 mt-1">Progres către obiective</p>
+                </CardContent>
+              </Card>
+            </div>
+
             {goals.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {goals.map((goal) => {
                   const progress = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
                   const isCompleted = goal.is_completed || progress >= 100;
+                  const deadlineDate = new Date(goal.deadline);
+                  const today = new Date();
+                  const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
                   
                   return (
-                    <Card key={goal.id} className={isCompleted ? 'border-green-200 bg-green-50' : ''}>
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span className="truncate">{goal.title}</span>
-                          {isCompleted && <Trophy className="h-5 w-5 text-green-600" />}
-                        </CardTitle>
-                        {goal.description && (
-                          <CardDescription>{goal.description}</CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Progres:</span>
-                            <span className="font-semibold">
-                              {goal.current_amount.toFixed(2)} / {goal.target_amount.toFixed(2)} Lei
-                            </span>
+                    <Card key={goal.id} className={`bg-white shadow-sm hover:shadow-md transition-shadow border-l-4 ${
+                      isCompleted ? 'border-l-green-500' : 
+                      daysUntilDeadline < 30 ? 'border-l-red-500' : 
+                      'border-l-blue-500'
+                    }`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-lg font-semibold text-gray-900 mb-1">{goal.title}</CardTitle>
+                            {goal.description && (
+                              <CardDescription className="text-sm text-gray-600">{goal.description}</CardDescription>
+                            )}
                           </div>
-                          
+                          {isCompleted && <Trophy className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-500">Progres</p>
+                            <p className="font-semibold text-gray-900">
+                              {goal.current_amount.toFixed(0)} / {goal.target_amount.toFixed(0)} Lei
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Deadline</p>
+                            <p className={`font-semibold ${
+                              daysUntilDeadline < 0 ? 'text-red-600' : 
+                              daysUntilDeadline < 30 ? 'text-orange-600' : 'text-gray-900'
+                            }`}>
+                              {deadlineDate.toLocaleDateString('ro-RO')}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full transition-all ${
@@ -284,31 +365,33 @@ const BudgetsAndGoals = () => {
                               style={{ width: `${Math.min(progress, 100)}%` }}
                             />
                           </div>
-                          
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-500">
-                              {progress.toFixed(1)}%
-                            </span>
-                            <span className="text-gray-500">
-                              {new Date(goal.deadline).toLocaleDateString('ro-RO')}
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-500">{progress.toFixed(1)}%</span>
+                            <span className={`${
+                              daysUntilDeadline < 0 ? 'text-red-600' : 
+                              daysUntilDeadline < 30 ? 'text-orange-600' : 'text-gray-500'
+                            }`}>
+                              {daysUntilDeadline < 0 ? 'Expirat' : 
+                               daysUntilDeadline === 0 ? 'Astăzi' : 
+                               `${daysUntilDeadline} zile`}
                             </span>
                           </div>
-                          
+                        </div>
+                        
+                        <div className="flex items-center gap-2 flex-wrap">
                           {goal.category && (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                {goal.category}
-                              </span>
-                              {goal.priority && (
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  goal.priority === 'high' ? 'bg-red-100 text-red-800' :
-                                  goal.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-green-100 text-green-800'
-                                }`}>
-                                  {goal.priority === 'high' ? 'Mare' : goal.priority === 'medium' ? 'Medie' : 'Mică'}
-                                </span>
-                              )}
-                            </div>
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                              {goal.category}
+                            </span>
+                          )}
+                          {goal.priority && (
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              goal.priority === 'high' ? 'bg-red-100 text-red-800' :
+                              goal.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              Prioritate {goal.priority === 'high' ? 'Mare' : goal.priority === 'medium' ? 'Medie' : 'Mică'}
+                            </span>
                           )}
                         </div>
                       </CardContent>
