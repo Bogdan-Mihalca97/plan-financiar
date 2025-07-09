@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PiggyBank, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const [isLogin, setIsLogin] = useState(mode !== 'signup');
   const [pendingInvitation, setPendingInvitation] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",

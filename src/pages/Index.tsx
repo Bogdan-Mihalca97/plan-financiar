@@ -20,7 +20,7 @@ const Index = () => {
                 <Link to="/auth">Conectare</Link>
               </Button>
               <Button asChild>
-                <Link to="/auth">Începe Acum</Link>
+                <Link to="/auth?mode=signup">Începe Acum</Link>
               </Button>
             </div>
           </div>
@@ -38,7 +38,7 @@ const Index = () => {
             Fă ca fiecare leu să conteze și atinge-ți obiectivele financiare.
           </p>
           <Button size="lg" asChild className="mr-4">
-            <Link to="/auth">Începe Planificarea Acum</Link>
+            <Link to="/auth?mode=signup">Începe Planificarea Acum</Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
             <Link to="/auth">Ai deja un cont?</Link>
