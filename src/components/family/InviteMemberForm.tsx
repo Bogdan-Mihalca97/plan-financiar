@@ -47,7 +47,7 @@ const InviteMemberForm = () => {
       setInviteEmail("");
       toast({
         title: "Succes",
-        description: "Invitația a fost trimisă cu succes!",
+        description: "Invitația a fost creată cu succes! (Email dezactivat pentru testare)",
       });
     } catch (error: any) {
       console.error('Error inviting member:', error);

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -351,47 +350,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       console.log('Invitation created successfully:', data);
 
-      // Send invitation email
-      try {
-        const { data: inviterProfile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', user.id)
-          .single();
-
-        const inviterName = inviterProfile 
-          ? `${inviterProfile.first_name} ${inviterProfile.last_name}`.trim()
-          : 'Un membru al familiei';
-
-        const response = await supabase.functions.invoke('send-invitation-email', {
-          body: {
-            email: email.toLowerCase().trim(),
-            familyName: currentFamily.name,
-            inviterName,
-            invitationId: data.id
-          }
-        });
-
-        if (response.error) {
-          console.error('Error sending invitation email:', response.error);
-          toast({
-            title: "Invitație creată",
-            description: "Invitația a fost creată, dar emailul nu a putut fi trimis. Utilizatorul va primi notificarea când se va loga.",
-          });
-        } else {
-          console.log('Invitation email sent successfully');
-          toast({
-            title: "Succes",
-            description: "Invitația a fost trimisă cu succes prin email",
-          });
-        }
-      } catch (emailError) {
-        console.error('Error sending invitation email:', emailError);
-        toast({
-          title: "Invitație creată",
-          description: "Invitația a fost creată. Utilizatorul va primi notificarea când se va loga.",
-        });
-      }
+      // TEMPORAR: Dezactivez trimiterea de email pentru testare
+      console.log('Email sending disabled for testing - invitation created successfully');
+      
+      toast({
+        title: "Succes",
+        description: "Invitația a fost creată cu succes în baza de date",
+      });
 
       await loadFamilyData();
     } catch (error: any) {
