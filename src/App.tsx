@@ -19,6 +19,7 @@ import Budgets from "@/pages/Budgets";
 import Goals from "@/pages/Goals";
 import Family from "@/pages/Family";
 import Profile from "@/pages/Profile";
+import Reports from "@/pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
                       <Route path="/goals" element={<Goals />} />
                       <Route path="/family" element={<Family />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/reports" element={<Reports />} />
                     </Routes>
                   </BrowserRouter>
                 </TooltipProvider>
