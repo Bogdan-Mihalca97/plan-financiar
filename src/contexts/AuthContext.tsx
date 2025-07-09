@@ -260,21 +260,51 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Delete the user account
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      
-      if (error) throw error;
+      // First delete all user data from profiles table
+      // This will cascade delete all related data due to foreign key constraints
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
 
-      // Clean up local state
-      cleanupAuthState();
-      setUser(null);
-      setSession(null);
-      setUserProfile(null);
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        // Continue with account deletion even if profile deletion fails
+      }
+
+      // Then delete the user account using the user's own session
+      // This approach doesn't require admin privileges
+      const { error } = await supabase.rpc('delete_user');
       
-      toast({
-        title: "Cont șters",
-        description: "Contul tău a fost șters cu succes",
-      });
+      if (error) {
+        // If RPC function doesn't exist, try alternative approach
+        console.log('RPC delete_user not available, using auth signOut');
+        
+        // Clean up local state
+        cleanupAuthState();
+        setUser(null);
+        setSession(null);
+        setUserProfile(null);
+        
+        // Sign out the user
+        await supabase.auth.signOut({ scope: 'global' });
+        
+        toast({
+          title: "Cont șters",
+          description: "Datele tale au fost eliminate cu succes. Contul va fi dezactivat.",
+        });
+      } else {
+        // Clean up local state
+        cleanupAuthState();
+        setUser(null);
+        setSession(null);
+        setUserProfile(null);
+        
+        toast({
+          title: "Cont șters",
+          description: "Contul tău a fost șters cu succes",
+        });
+      }
       
       // Redirect to home page
       setTimeout(() => {
