@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, TrendingUp, TrendingDown, DollarSign, Target, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useInvestments } from "@/contexts/InvestmentsContext";
+import { useFamily } from "@/contexts/FamilyContext";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AddInvestmentForm from "@/components/investments/AddInvestmentForm";
@@ -20,54 +21,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Investment {
-  id: string;
-  name: string;
-  type: string;
-  symbol: string | null;
-  purchase_price: number;
-  current_price: number;
-  quantity: number;
-  purchase_date: string;
-  created_at: string;
-}
-
 const Investments = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { allInvestments, familyInvestments, loading, deleteInvestment, refreshInvestments } = useInvestments();
+  const { currentFamily } = useFamily();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [investments, setInvestments] = useState<Investment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [investmentToDelete, setInvestmentToDelete] = useState<Investment | null>(null);
+  const [investmentToDelete, setInvestmentToDelete] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
-  const fetchInvestments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('investments')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setInvestments(data || []);
-    } catch (error: any) {
-      console.error('Error fetching investments:', error);
-      toast({
-        title: "Eroare la încărcarea investițiilor",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInvestments();
-  }, []);
-
-  const handleDeleteClick = (investment: Investment) => {
+  const handleDeleteClick = (investment: any) => {
     setInvestmentToDelete(investment);
     setDeleteDialogOpen(true);
   };
@@ -77,20 +41,11 @@ const Investments = () => {
 
     setDeleting(true);
     try {
-      const { error } = await supabase
-        .from('investments')
-        .delete()
-        .eq('id', investmentToDelete.id);
-
-      if (error) throw error;
-
+      await deleteInvestment(investmentToDelete.id);
       toast({
         title: "Investiție ștearsă!",
         description: `${investmentToDelete.name} a fost ștearsă cu succes.`,
       });
-
-      // Remove the investment from the local state
-      setInvestments(prev => prev.filter(inv => inv.id !== investmentToDelete.id));
     } catch (error: any) {
       console.error('Error deleting investment:', error);
       toast({
@@ -105,13 +60,13 @@ const Investments = () => {
     }
   };
 
-  const totalInvested = investments.reduce((sum, inv) => sum + (inv.purchase_price * inv.quantity), 0);
-  const currentValue = investments.reduce((sum, inv) => sum + (inv.current_price * inv.quantity), 0);
+  const totalInvested = allInvestments.reduce((sum, inv) => sum + (inv.purchase_price * inv.quantity), 0);
+  const currentValue = allInvestments.reduce((sum, inv) => sum + (inv.current_price * inv.quantity), 0);
   const totalGainLoss = currentValue - totalInvested;
   const totalGainLossPercentage = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
 
   const handleInvestmentAdded = () => {
-    fetchInvestments();
+    refreshInvestments();
   };
 
   if (authLoading || loading) {
@@ -139,12 +94,19 @@ const Investments = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Investiții</h2>
-            <p className="text-gray-600">Gestionează și urmărește portofoliul tău de investiții</p>
+            <p className="text-gray-600">
+              Gestionează și urmărește portofoliul tău de investiții
+              {currentFamily && familyInvestments.length > 0 && (
+                <span className="ml-2 text-blue-600">
+                  ({familyInvestments.length} investiții de familie)
+                </span>
+              )}
+            </p>
           </div>
           <div className="flex gap-2">
             <RefreshPricesButton 
-              investments={investments}
-              onRefresh={fetchInvestments}
+              investments={allInvestments}
+              onRefresh={refreshInvestments}
             />
             <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
@@ -152,6 +114,17 @@ const Investments = () => {
             </Button>
           </div>
         </div>
+
+        {currentFamily && familyInvestments.length > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-blue-900 font-medium mb-2">
+              Investiții Familie: {currentFamily.name}
+            </h3>
+            <p className="text-blue-700 text-sm">
+              Poți vedea {familyInvestments.length} investiții din familia ta, plus investițiile tale personale.
+            </p>
+          </div>
+        )}
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -215,9 +188,9 @@ const Investments = () => {
         </div>
 
         {/* Investments List or Empty State */}
-        {investments.length > 0 ? (
+        {allInvestments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {investments.map((investment) => {
+            {allInvestments.map((investment) => {
               const totalCost = investment.purchase_price * investment.quantity;
               const currentVal = investment.current_price * investment.quantity;
               const gainLoss = currentVal - totalCost;
@@ -232,6 +205,11 @@ const Investments = () => {
                         {investment.symbol && (
                           <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
                             {investment.symbol}
+                          </span>
+                        )}
+                        {investment.family_group_id && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Familie
                           </span>
                         )}
                         <Button

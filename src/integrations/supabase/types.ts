@@ -209,6 +209,7 @@ export type Database = {
         Row: {
           created_at: string
           current_price: number
+          family_group_id: string | null
           id: string
           name: string
           purchase_date: string
@@ -222,6 +223,7 @@ export type Database = {
         Insert: {
           created_at?: string
           current_price: number
+          family_group_id?: string | null
           id?: string
           name: string
           purchase_date: string
@@ -235,6 +237,7 @@ export type Database = {
         Update: {
           created_at?: string
           current_price?: number
+          family_group_id?: string | null
           id?: string
           name?: string
           purchase_date?: string
@@ -245,7 +248,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "investments_family_group_id_fkey"
+            columns: ["family_group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
