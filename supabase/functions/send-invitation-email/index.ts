@@ -23,16 +23,22 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log('Starting send-invitation-email function');
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
+    // Verifică dacă RESEND_API_KEY este configurat
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     console.log('Resend API key exists:', !!resendApiKey);
     
     if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY is not configured');
+      console.error('RESEND_API_KEY is not configured');
+      return new Response(
+        JSON.stringify({ 
+          error: 'RESEND_API_KEY is not configured',
+          details: 'Email service not properly configured'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     const resend = new Resend(resendApiKey);
@@ -40,13 +46,13 @@ const handler = async (req: Request): Promise<Response> => {
     const { email, familyName, inviterName, invitationId }: InvitationEmailRequest = await req.json();
     console.log('Request data:', { email, familyName, inviterName, invitationId });
 
-    // Use the correct site URL - get it from the request headers or environment
-    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'https://izsvgmgivjpyjuxtesl.supabase.co';
-    const invitationUrl = `${origin}/invitation/${invitationId}`;
+    // Generează URL-ul pentru acceptarea invitației
+    const baseUrl = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'https://izsvgmgivjpyjuxteslt.supabase.co';
+    const invitationUrl = `${baseUrl}/invitation/${invitationId}`;
 
     console.log('Generated invitation URL:', invitationUrl);
 
-    // Send email using Resend
+    // Trimite emailul folosind Resend
     console.log('Attempting to send email to:', email);
     
     const emailResponse = await resend.emails.send({
@@ -107,22 +113,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error('Resend error:', emailResponse.error);
-      throw new Error(`Resend error: ${JSON.stringify(emailResponse.error)}`);
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to send email',
+          details: emailResponse.error,
+          resendError: emailResponse.error
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('Email sent successfully via Resend');
-
-    // Mark invitation as email sent
-    const { error: updateError } = await supabaseClient
-      .from('family_invitations')
-      .update({ 
-        status: 'pending' // Keep as pending, but we know email was sent
-      })
-      .eq('id', invitationId);
-
-    if (updateError) {
-      console.error('Error updating invitation status:', updateError);
-    }
 
     return new Response(
       JSON.stringify({ 
@@ -144,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
         details: 'Failed to send invitation email',
         stack: error.stack
       }),
