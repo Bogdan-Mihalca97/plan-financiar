@@ -30,8 +30,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { email, familyName, inviterName, invitationId }: InvitationEmailRequest = await req.json();
 
-    // Create the invitation acceptance URL
-    const invitationUrl = `${Deno.env.get('SITE_URL') || 'http://localhost:3000'}/invitation/${invitationId}`;
+    // Use the correct site URL - get it from the request headers or environment
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'https://izsvgmgivjpyjuxtesl.supabase.co';
+    const invitationUrl = `${origin}/invitation/${invitationId}`;
+
+    console.log('Generated invitation URL:', invitationUrl);
 
     // Send email using Resend
     const emailResponse = await resend.emails.send({
@@ -102,7 +105,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: 'Invitation email sent successfully',
-        emailId: emailResponse.data?.id 
+        emailId: emailResponse.data?.id,
+        invitationUrl: invitationUrl
       }),
       {
         status: 200,
