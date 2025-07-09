@@ -162,13 +162,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (userProfile?.email) {
           console.log('Checking invitations for email:', userProfile.email);
           
+          // Simplified query without problematic joins  
           const { data: pendingInvitations, error: pendingError } = await supabase
             .from('family_invitations')
-            .select(`
-              *,
-              family_groups!inner(name),
-              inviter_profiles:profiles!family_invitations_invited_by_fkey(first_name, last_name)
-            `)
+            .select('*')
             .eq('email', userProfile.email.toLowerCase())
             .eq('status', 'pending')
             .gt('expires_at', new Date().toISOString());
@@ -180,16 +177,44 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           } else if (pendingInvitations && pendingInvitations.length > 0) {
             console.log('Found pending invitations for user:', pendingInvitations);
             
-            const formattedInvitations = pendingInvitations.map(inv => ({
-              ...inv,
-              status: inv.status as 'pending' | 'accepted' | 'declined',
-              family_name: (inv as any).family_groups?.name || 'Familie necunoscută',
-              inviter_name: (inv as any).inviter_profiles 
-                ? `${(inv as any).inviter_profiles.first_name} ${(inv as any).inviter_profiles.last_name}`.trim()
-                : 'Administrator'
-            }));
+            // Get additional details for each invitation
+            const enrichedInvitations = [];
+            for (const invitation of pendingInvitations) {
+              try {
+                // Get family name
+                const { data: family } = await supabase
+                  .from('family_groups')
+                  .select('name')
+                  .eq('id', invitation.family_group_id)
+                  .single();
 
-            setPendingInvitations(formattedInvitations);
+                // Get inviter name
+                const { data: inviterProfile } = await supabase
+                  .from('profiles')
+                  .select('first_name, last_name')
+                  .eq('id', invitation.invited_by)
+                  .maybeSingle();
+
+                enrichedInvitations.push({
+                  ...invitation,
+                  status: invitation.status as 'pending' | 'accepted' | 'declined',
+                  family_name: family?.name || 'Familie necunoscută',
+                  inviter_name: inviterProfile 
+                    ? `${inviterProfile.first_name} ${inviterProfile.last_name}`.trim()
+                    : 'Administrator'
+                });
+              } catch (error) {
+                console.error('Error enriching invitation:', error);
+                enrichedInvitations.push({
+                  ...invitation,
+                  status: invitation.status as 'pending' | 'accepted' | 'declined',
+                  family_name: 'Familie necunoscută',
+                  inviter_name: 'Administrator'
+                });
+              }
+            }
+
+            setPendingInvitations(enrichedInvitations);
 
             // Show notification for pending invitations
             toast({
