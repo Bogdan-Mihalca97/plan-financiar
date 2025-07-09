@@ -17,6 +17,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (firstName: string, lastName: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -227,6 +229,64 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const updateProfile = async (firstName: string, lastName: string) => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setUserProfile(prev => prev ? {
+        ...prev,
+        first_name: firstName,
+        last_name: lastName,
+      } : null);
+
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      throw error;
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      // Delete the user account
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) throw error;
+
+      // Clean up local state
+      cleanupAuthState();
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      
+      toast({
+        title: "Cont șters",
+        description: "Contul tău a fost șters cu succes",
+      });
+      
+      // Redirect to home page
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       console.log('Starting logout process...');
@@ -287,6 +347,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     register,
     logout,
+    updateProfile,
+    deleteAccount,
     isAuthenticated: !!user,
     loading
   };

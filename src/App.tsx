@@ -10,6 +10,7 @@ import Transactions from './pages/Transactions';
 import BudgetsAndGoals from './pages/BudgetsAndGoals';
 import Investments from './pages/Investments';
 import Family from "@/pages/Family";
+import Profile from "@/pages/Profile";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import DataFlow from "./pages/DataFlow";
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/goals" element={<BudgetsAndGoals />} />
                 <Route path="/investments" element={<Investments />} />
                 <Route path="/family" element={<Family />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/dataflow" element={<DataFlow />} />
                 <Route path="/uml" element={<UMLDiagrams />} />
