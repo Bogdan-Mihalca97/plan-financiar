@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -86,16 +87,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       if (membership) {
-        // Get the family group details
+        // Get the family group details using maybeSingle to avoid single() errors
         const { data: familyGroup, error: familyError } = await supabase
           .from('family_groups')
           .select('*')
           .eq('id', membership.family_group_id)
-          .single();
+          .maybeSingle();
 
         if (familyError) {
           console.error('Error loading family group:', familyError);
           throw familyError;
+        }
+
+        if (!familyGroup) {
+          console.error('Family group not found for membership:', membership);
+          throw new Error('Familie nu a fost găsită');
         }
 
         setCurrentFamily(familyGroup);
@@ -186,7 +192,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                   .from('family_groups')
                   .select('name')
                   .eq('id', invitation.family_group_id)
-                  .single();
+                  .maybeSingle();
 
                 // Get inviter name
                 const { data: inviterProfile } = await supabase
@@ -460,7 +466,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Clear pending invitations and reload family data
       setPendingInvitations([]);
-      await loadFamilyData();
+      
+      // Add a small delay to ensure the database is updated
+      setTimeout(async () => {
+        await loadFamilyData();
+      }, 1000);
+      
     } catch (error: any) {
       console.error('Error accepting invitation:', error);
       toast({
