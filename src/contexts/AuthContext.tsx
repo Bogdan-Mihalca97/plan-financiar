@@ -175,7 +175,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Don't redirect if skipAuthRedirect flag is set
           localStorage.removeItem('skipAuthRedirect');
         } else {
-          // Force page reload for clean state
+          // Navigate to dashboard without full page reload
           setTimeout(() => {
             window.location.href = '/dashboard';
           }, 500);
@@ -216,8 +216,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.user) {
         toast({
           title: "Cont Creat cu Succes!",
-          description: "Verifică-ți emailul pentru a confirma contul și apoi conectează-te.",
+          description: "Te-am conectat automat. Bun venit la BugetControl!",
         });
+        
+        // Redirect to dashboard after successful registration
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
       }
     } catch (error: any) {
       console.error('Register error:', error);
@@ -326,7 +331,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         description: "Te-ai deconectat din cont",
       });
       
-      // Force page reload to ensure clean state
+      // Navigate to home without full page reload
       setTimeout(() => {
         window.location.href = '/';
       }, 500);

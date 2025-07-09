@@ -55,10 +55,7 @@ const Auth = () => {
           throw new Error("Parolele nu se potrivesc");
         }
         await register(formData);
-        // After successful registration, redirect to home page
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1000);
+        // AuthContext will handle the redirect to dashboard
       }
     } catch (error) {
       // Error handling is done in the AuthContext
