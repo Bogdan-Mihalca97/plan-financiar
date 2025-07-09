@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Navigate } from "react-router-dom";
@@ -10,7 +11,7 @@ import RecentTransactions from "@/components/dashboard/RecentTransactions";
 const Dashboard = () => {
   const { isAuthenticated, loading, userProfile } = useAuth();
   const { 
-    transactions, 
+    allTransactions,
     getTotalIncome, 
     getTotalExpenses, 
     getBalance, 
@@ -43,6 +44,27 @@ const Dashboard = () => {
   const monthlyBalance = getMonthlyBalance();
   const expensesByCategory = getTransactionsByCategory();
 
+  // Calculate current month transactions count
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const currentMonthTransactions = allTransactions.filter(t => {
+    const transactionDate = new Date(t.date);
+    return transactionDate.getMonth() === currentMonth && 
+           transactionDate.getFullYear() === currentYear;
+  });
+
+  const incomeTransactionCount = currentMonthTransactions.filter(t => t.type === 'income').length;
+  const expenseTransactionCount = currentMonthTransactions.filter(t => t.type === 'expense').length;
+  const totalTransactionCount = currentMonthTransactions.length;
+
+  console.log('Current month transactions:', {
+    total: totalTransactionCount,
+    income: incomeTransactionCount,
+    expenses: expenseTransactionCount,
+    allTransactions: allTransactions.length
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -54,25 +76,14 @@ const Dashboard = () => {
           balance={monthlyBalance}
           totalIncome={monthlyIncome}
           totalExpenses={monthlyExpenses}
-          incomeTransactionCount={transactions.filter(t => {
-            const transactionDate = new Date(t.date);
-            const now = new Date();
-            return t.type === 'income' && 
-                   transactionDate.getMonth() === now.getMonth() && 
-                   transactionDate.getFullYear() === now.getFullYear();
-          }).length}
-          expenseTransactionCount={transactions.filter(t => {
-            const transactionDate = new Date(t.date);
-            const now = new Date();
-            return t.type === 'expense' && 
-                   transactionDate.getMonth() === now.getMonth() && 
-                   transactionDate.getFullYear() === now.getFullYear();
-          }).length}
+          incomeTransactionCount={incomeTransactionCount}
+          expenseTransactionCount={expenseTransactionCount}
+          totalTransactionCount={totalTransactionCount}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <BudgetOverview expensesByCategory={expensesByCategory} />
-          <RecentTransactions transactions={transactions} />
+          <RecentTransactions transactions={allTransactions} />
         </div>
       </main>
     </div>

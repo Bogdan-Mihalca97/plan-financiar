@@ -1,6 +1,6 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PiggyBank, TrendingUp, TrendingDown, Target } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, TrendingDown, Wallet, Activity } from "lucide-react";
 
 interface OverviewCardsProps {
   balance: number;
@@ -8,6 +8,7 @@ interface OverviewCardsProps {
   totalExpenses: number;
   incomeTransactionCount: number;
   expenseTransactionCount: number;
+  totalTransactionCount?: number;
 }
 
 const OverviewCards = ({ 
@@ -15,35 +16,43 @@ const OverviewCards = ({
   totalIncome, 
   totalExpenses, 
   incomeTransactionCount, 
-  expenseTransactionCount 
+  expenseTransactionCount,
+  totalTransactionCount = 0
 }: OverviewCardsProps) => {
-  const savingsRate = totalIncome > 0 ? (balance / totalIncome) * 100 : 0;
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ro-RO', {
+      style: 'currency',
+      currency: 'RON',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Sold Luna</CardTitle>
-          <PiggyBank className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Sold Lunar</CardTitle>
+          <Wallet className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {balance.toLocaleString('ro-RO')} Lei
+            {formatCurrency(balance)}
           </div>
           <p className="text-xs text-muted-foreground">
-            {balance >= 0 ? 'Situație pozitivă' : 'Atenție la cheltuieli'}
+            Diferența dintre venituri și cheltuieli
           </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Venituri Luna</CardTitle>
-          <TrendingUp className="h-4 w-4 text-green-500" />
+          <CardTitle className="text-sm font-medium">Venituri Lunare</CardTitle>
+          <TrendingUp className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">
-            {totalIncome.toLocaleString('ro-RO')} Lei
+            {formatCurrency(totalIncome)}
           </div>
           <p className="text-xs text-muted-foreground">
             {incomeTransactionCount} tranzacții
@@ -53,12 +62,12 @@ const OverviewCards = ({
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Cheltuieli Luna</CardTitle>
-          <TrendingDown className="h-4 w-4 text-red-500" />
+          <CardTitle className="text-sm font-medium">Cheltuieli Lunare</CardTitle>
+          <TrendingDown className="h-4 w-4 text-red-600" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-red-600">
-            {totalExpenses.toLocaleString('ro-RO')} Lei
+            {formatCurrency(totalExpenses)}
           </div>
           <p className="text-xs text-muted-foreground">
             {expenseTransactionCount} tranzacții
@@ -68,14 +77,16 @@ const OverviewCards = ({
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Rata Economisire</CardTitle>
-          <Target className="h-4 w-4 text-blue-500" />
+          <CardTitle className="text-sm font-medium">Total Tranzacții</CardTitle>
+          <Activity className="h-4 w-4 text-blue-600" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-600">
-            {savingsRate.toFixed(1)}%
+            {totalTransactionCount}
           </div>
-          <p className="text-xs text-muted-foreground">Obiectiv: 30%</p>
+          <p className="text-xs text-muted-foreground">
+            în luna curentă
+          </p>
         </CardContent>
       </Card>
     </div>
