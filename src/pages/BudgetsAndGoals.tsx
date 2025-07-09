@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, PiggyBank, Trophy, DollarSign, AlertTriangle } from "lucide-react";
+import { Plus, Target, PiggyBank, Trophy, DollarSign, AlertTriangle, Trash2, Edit } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +10,20 @@ import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AddBudgetForm from "@/components/budgets/AddBudgetForm";
 import AddGoalForm from "@/components/goals/AddGoalForm";
+import EditGoalForm from "@/components/goals/EditGoalForm";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Budget {
   id: string;
@@ -38,6 +51,8 @@ const BudgetsAndGoals = () => {
   const { getTransactionsByCategory } = useTransactions();
   const [showAddBudgetForm, setShowAddBudgetForm] = useState(false);
   const [showAddGoalForm, setShowAddGoalForm] = useState(false);
+  const [showEditGoalForm, setShowEditGoalForm] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +90,61 @@ const BudgetsAndGoals = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .delete()
+        .eq('id', budgetId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Buget șters",
+        description: "Bugetul a fost șters cu succes.",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      console.error('Error deleting budget:', error);
+      toast({
+        title: "Eroare la ștergerea bugetului",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .delete()
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Obiectiv șters",
+        description: "Obiectivul a fost șters cu succes.",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      console.error('Error deleting goal:', error);
+      toast({
+        title: "Eroare la ștergerea obiectivului",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditGoal = (goal: Goal) => {
+    setSelectedGoal(goal);
+    setShowEditGoalForm(true);
   };
 
   useEffect(() => {
@@ -195,9 +265,40 @@ const BudgetsAndGoals = () => {
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-lg font-semibold text-gray-900">{budget.category}</CardTitle>
-                          <span className={`text-xs px-2 py-1 rounded-full ${budget.period === 'monthly' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
-                            {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-1 rounded-full ${budget.period === 'monthly' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                              {budget.period === 'monthly' ? 'Lunar' : 'Anual'}
+                            </span>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Șterge Bugetul</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Ești sigur că vrei să ștergi bugetul pentru categoria "{budget.category}" cu limita de {budget.limit_amount.toFixed(2)} Lei?
+                                    Această acțiune nu poate fi anulată.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Anulează</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteBudget(budget.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Șterge
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -331,7 +432,46 @@ const BudgetsAndGoals = () => {
                               <CardDescription className="text-sm text-gray-600">{goal.description}</CardDescription>
                             )}
                           </div>
-                          {isCompleted && <Trophy className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                          <div className="flex items-center gap-2">
+                            {isCompleted && <Trophy className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditGoal(goal)}
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Șterge Obiectivul</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Ești sigur că vrei să ștergi obiectivul "{goal.title}" cu ținta de {goal.target_amount.toFixed(2)} Lei?
+                                    Această acțiune nu poate fi anulată.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Anulează</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteGoal(goal.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Șterge
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -431,6 +571,18 @@ const BudgetsAndGoals = () => {
             fetchData();
           }} 
         />
+
+        {selectedGoal && (
+          <EditGoalForm
+            goal={selectedGoal}
+            isOpen={showEditGoalForm}
+            onClose={() => {
+              setShowEditGoalForm(false);
+              setSelectedGoal(null);
+              fetchData();
+            }}
+          />
+        )}
       </main>
     </div>
   );
