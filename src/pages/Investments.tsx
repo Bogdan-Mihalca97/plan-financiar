@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -135,7 +136,7 @@ const Investments = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalInvested.toFixed(2)} Lei</div>
-              <p className="text-xs text-muted-foreground">{investments.length} investiții</p>
+              <p className="text-xs text-muted-foreground">{allInvestments.length} investiții</p>
             </CardContent>
           </Card>
 
