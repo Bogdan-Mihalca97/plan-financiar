@@ -1,11 +1,12 @@
-import { useParams, useNavigate } from "react-router-dom";
+
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Users } from "lucide-react";
+import { Loader2, UserPlus, Users, Mail } from "lucide-react";
 
 interface FamilyInvitation {
   id: string;
@@ -28,6 +29,7 @@ interface FamilyInvitation {
 const InvitationAcceptance = () => {
   const { invitationId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   
@@ -183,6 +185,14 @@ const InvitationAcceptance = () => {
     }
   };
 
+  const handleAuthRedirect = () => {
+    // Store invitation ID in localStorage to return after auth
+    if (invitationId) {
+      localStorage.setItem('pendingInvitation', invitationId);
+    }
+    navigate('/auth');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -236,15 +246,30 @@ const InvitationAcceptance = () => {
 
           {!isAuthenticated ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600 text-center">
-                Pentru a accepta invitația, trebuie să te conectezi cu emailul: 
-                <strong className="block mt-1">{invitation.email}</strong>
-              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Pentru a accepta invitația:
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      1. Conectează-te sau creează cont cu emailul: <strong>{invitation.email}</strong>
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      2. Verifică-ți emailul dacă este un cont nou
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      3. Revino la acest link pentru a accepta invitația
+                    </p>
+                  </div>
+                </div>
+              </div>
               <Button 
-                onClick={() => navigate('/auth')} 
+                onClick={handleAuthRedirect}
                 className="w-full"
               >
-                Conectează-te
+                Conectează-te / Creează cont
               </Button>
             </div>
           ) : user?.email !== invitation.email ? (
@@ -253,7 +278,7 @@ const InvitationAcceptance = () => {
                 Ești conectat cu {user?.email}, dar invitația este pentru {invitation.email}.
               </p>
               <Button 
-                onClick={() => navigate('/auth')} 
+                onClick={handleAuthRedirect}
                 variant="outline"
                 className="w-full"
               >

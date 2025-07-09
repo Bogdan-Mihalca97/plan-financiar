@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,6 +82,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const checkPendingInvitation = () => {
+    const pendingInvitation = localStorage.getItem('pendingInvitation');
+    if (pendingInvitation) {
+      localStorage.removeItem('pendingInvitation');
+      // Redirect to invitation page after successful auth
+      setTimeout(() => {
+        window.location.href = `/invitation/${pendingInvitation}`;
+      }, 1000);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -95,6 +105,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user) {
           setTimeout(() => {
             fetchUserProfile(session.user.id);
+            // Check for pending invitation after profile is loaded
+            if (event === 'SIGNED_IN') {
+              setTimeout(checkPendingInvitation, 500);
+            }
           }, 0);
         } else {
           setUserProfile(null);
@@ -145,10 +159,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: "Bun venit înapoi la BugetControl",
         });
         
-        // Force page reload for clean state
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 500);
+        // Check for pending invitation before redirect
+        const pendingInvitation = localStorage.getItem('pendingInvitation');
+        if (pendingInvitation) {
+          localStorage.removeItem('pendingInvitation');
+          setTimeout(() => {
+            window.location.href = `/invitation/${pendingInvitation}`;
+          }, 500);
+        } else {
+          // Force page reload for clean state
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 500);
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);
