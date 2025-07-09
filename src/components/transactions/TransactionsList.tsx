@@ -7,6 +7,17 @@ import { Edit2, Trash2, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import EditTransactionForm from "@/components/transactions/EditTransactionForm";
 import { Transaction } from "@/types/transaction";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TransactionsListProps {
   transactions: Transaction[];
@@ -24,13 +35,11 @@ const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDel
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
-    if (window.confirm("Ești sigur că vrei să ștergi această tranzacție?")) {
-      try {
-        await deleteTransaction(transactionId);
-        onTransactionDeleted();
-      } catch (error) {
-        console.error('Error deleting transaction:', error);
-      }
+    try {
+      await deleteTransaction(transactionId);
+      onTransactionDeleted();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
     }
   };
 
@@ -97,13 +106,34 @@ const TransactionsList = ({ transactions, onTransactionUpdated, onTransactionDel
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteTransaction(transaction.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Șterge Tranzacția</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Ești sigur că vrei să ștergi tranzacția "{transaction.description}" în valoare de {Math.abs(transaction.amount).toFixed(2)} RON?
+                            Această acțiune nu poate fi anulată.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Anulează</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteTransaction(transaction.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Șterge
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </div>

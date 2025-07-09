@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PiggyBank, Plus, Target, Trophy, DollarSign, Trash2 } from "lucide-react";
+import { PiggyBank, Plus, Target, Trophy, DollarSign, Trash2, Edit2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AddGoalForm from "@/components/goals/AddGoalForm";
+import EditGoalForm from "@/components/goals/EditGoalForm";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ interface Goal {
 const Goals = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -96,6 +98,11 @@ const Goals = () => {
 
   const handleGoalAdded = () => {
     fetchGoals();
+  };
+
+  const handleGoalUpdated = () => {
+    fetchGoals();
+    setEditingGoal(null);
   };
 
   if (authLoading || loading) {
@@ -187,31 +194,41 @@ const Goals = () => {
                 <Card key={goal.id} className={isCompleted ? 'border-green-200 bg-green-50' : ''}>
                   <div className="flex justify-between items-start p-2">
                     {isCompleted && <Trophy className="h-5 w-5 text-green-600" />}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Șterge Obiectivul</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Ești sigur că vrei să ștergi obiectivul "{goal.title}"? 
-                            Această acțiune nu poate fi anulată.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Anulează</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteGoal(goal.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Șterge
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700"
+                        onClick={() => setEditingGoal(goal)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Șterge Obiectivul</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Ești sigur că vrei să ștergi obiectivul "{goal.title}"? 
+                              Această acțiune nu poate fi anulată.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Anulează</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteGoal(goal.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Șterge
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                   
                   <CardHeader className="pt-0">
@@ -296,6 +313,16 @@ const Goals = () => {
             handleGoalAdded();
           }} 
         />
+
+        {/* Edit Goal Modal */}
+        {editingGoal && (
+          <EditGoalForm
+            goal={editingGoal}
+            isOpen={!!editingGoal}
+            onClose={() => setEditingGoal(null)}
+            onGoalUpdated={handleGoalUpdated}
+          />
+        )}
       </main>
     </div>
   );
