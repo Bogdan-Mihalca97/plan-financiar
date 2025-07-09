@@ -1,108 +1,88 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFamily } from '@/contexts/FamilyContext';
 
 export interface Transaction {
   id: string;
-  date: string;
-  description: string;
+  user_id: string;
   amount: number;
-  type: "income" | "expense";
+  type: 'income' | 'expense';
   category: string;
+  description: string;
+  date: string;
+  created_at: string;
+  updated_at: string;
+  family_group_id?: string;
 }
 
 interface TransactionsContextType {
   transactions: Transaction[];
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  addTransactions: (transactions: Omit<Transaction, 'id'>[]) => Promise<void>;
-  updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>;
-  deleteTransaction: (id: string) => Promise<void>;
-  getTotalIncome: () => number;
-  getTotalExpenses: () => number;
-  getBalance: () => number;
-  getMonthlyIncome: () => number;
-  getMonthlyExpenses: () => number;
-  getMonthlyBalance: () => number;
-  getTransactionsByCategory: () => Record<string, number>;
+  familyTransactions: Transaction[];
+  allTransactions: Transaction[];
   loading: boolean;
   refreshTransactions: () => Promise<void>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
-export const useTransactions = () => {
-  const context = useContext(TransactionsContext);
-  if (context === undefined) {
-    throw new Error('useTransactions must be used within a TransactionsProvider');
-  }
-  return context;
-};
-
-interface TransactionsProviderProps {
-  children: ReactNode;
-}
-
-// Helper function to transform Supabase data to our Transaction interface
-const transformSupabaseTransaction = (data: any): Transaction => ({
-  id: data.id,
-  date: data.date,
-  description: data.description,
-  amount: Number(data.amount),
-  type: data.type as "income" | "expense",
-  category: data.category
-});
-
-// Helper function to get current month's transactions
-const getCurrentMonthTransactions = (transactions: Transaction[]) => {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  
-  return transactions.filter(transaction => {
-    const transactionDate = new Date(transaction.date);
-    return transactionDate.getMonth() === currentMonth && 
-           transactionDate.getFullYear() === currentYear;
-  });
-};
-
-export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ children }) => {
-  const { user } = useAuth();
-  const { currentFamily } = useFamily();
+export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [familyTransactions, setFamilyTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
+  const { currentFamily } = useFamily();
 
   const fetchTransactions = async () => {
-    if (!user) {
-      setTransactions([]);
+    if (!user || !isAuthenticated) {
+      console.log('User not authenticated, skipping transactions fetch');
       setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
       console.log('Fetching transactions for user:', user.id);
       
-      // Simplified query to avoid RLS issues - only fetch personal transactions for now
-      const { data, error } = await supabase
+      // Fetch personal transactions (without family_group_id or user's own family transactions)
+      const { data: personalTransactions, error: personalError } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
-        .is('family_group_id', null)
         .order('date', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching transactions:', error);
-        throw error;
+      if (personalError) {
+        console.error('Error fetching personal transactions:', personalError);
+        throw personalError;
       }
 
-      console.log('Fetched transactions:', data);
-      const transformedData = (data || []).map(transformSupabaseTransaction);
-      setTransactions(transformedData);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setTransactions([]);
+      console.log('Fetched personal transactions:', personalTransactions);
+      setTransactions(personalTransactions || []);
+
+      // Fetch family transactions if user is part of a family
+      if (currentFamily) {
+        console.log('Fetching family transactions for family:', currentFamily.id);
+        
+        const { data: familyTxns, error: familyError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('family_group_id', currentFamily.id)
+          .order('date', { ascending: false });
+
+        if (familyError) {
+          console.error('Error fetching family transactions:', familyError);
+          console.log('Family error details:', familyError);
+        } else {
+          console.log('Fetched family transactions:', familyTxns);
+          setFamilyTransactions(familyTxns || []);
+        }
+      } else {
+        console.log('No family found, skipping family transactions');
+        setFamilyTransactions([]);
+      }
+
+    } catch (error: any) {
+      console.error('Error in fetchTransactions:', error);
     } finally {
       setLoading(false);
     }
@@ -110,162 +90,16 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
 
   useEffect(() => {
     fetchTransactions();
-  }, [user?.id]); // Removed currentFamily dependency to simplify
+  }, [user, isAuthenticated, currentFamily]);
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    if (!user) throw new Error('User must be authenticated');
-
-    console.log('Adding transaction:', transaction);
-
-    const transactionData = {
-      ...transaction,
-      user_id: user.id,
-      amount: Number(transaction.amount),
-      family_group_id: null // Set to null for now to avoid RLS issues
-    };
-
-    console.log('Transaction data to insert:', transactionData);
-
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([transactionData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error adding transaction:', error);
-        throw error;
-      }
-
-      console.log('Successfully added transaction:', data);
-      const transformedData = transformSupabaseTransaction(data);
-      setTransactions(prev => [transformedData, ...prev]);
-    } catch (error) {
-      console.error('Error in addTransaction:', error);
-      throw error;
-    }
-  };
-
-  const addTransactions = async (newTransactions: Omit<Transaction, 'id'>[]) => {
-    if (!user) throw new Error('User must be authenticated');
-
-    const transactionsWithUserId = newTransactions.map(transaction => ({
-      ...transaction,
-      user_id: user.id,
-      amount: Number(transaction.amount),
-      family_group_id: null // Set to null for now
-    }));
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert(transactionsWithUserId)
-      .select();
-
-    if (error) throw error;
-
-    const transformedData = (data || []).map(transformSupabaseTransaction);
-    setTransactions(prev => [...transformedData, ...prev]);
-  };
-
-  const updateTransaction = async (id: string, updatedTransaction: Partial<Transaction>) => {
-    if (!user) throw new Error('User must be authenticated');
-
-    const updateData: any = { ...updatedTransaction };
-    if (updateData.amount !== undefined) {
-      updateData.amount = Number(updateData.amount);
-    }
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    const transformedData = transformSupabaseTransaction(data);
-    setTransactions(prev => prev.map(transaction => 
-      transaction.id === id ? transformedData : transaction
-    ));
-  };
-
-  const deleteTransaction = async (id: string) => {
-    if (!user) throw new Error('User must be authenticated');
-
-    const { error } = await supabase
-      .from('transactions')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
-    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
-  };
-
-  const getTotalIncome = () => {
-    return transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
-
-  const getTotalExpenses = () => {
-    return transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
-
-  const getBalance = () => {
-    return getTotalIncome() - getTotalExpenses();
-  };
-
-  const getMonthlyIncome = () => {
-    const monthlyTransactions = getCurrentMonthTransactions(transactions);
-    return monthlyTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
-
-  const getMonthlyExpenses = () => {
-    const monthlyTransactions = getCurrentMonthTransactions(transactions);
-    return monthlyTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
-
-  const getMonthlyBalance = () => {
-    return getMonthlyIncome() - getMonthlyExpenses();
-  };
-
-  const getTransactionsByCategory = () => {
-    return transactions.reduce((acc, transaction) => {
-      if (transaction.type === 'expense') {
-        acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-  };
-
-  const refreshTransactions = async () => {
-    await fetchTransactions();
-  };
+  const allTransactions = [...transactions, ...familyTransactions];
 
   const value: TransactionsContextType = {
     transactions,
-    addTransaction,
-    addTransactions,
-    updateTransaction,
-    deleteTransaction,
-    getTotalIncome,
-    getTotalExpenses,
-    getBalance,
-    getMonthlyIncome,
-    getMonthlyExpenses,
-    getMonthlyBalance,
-    getTransactionsByCategory,
+    familyTransactions,
+    allTransactions,
     loading,
-    refreshTransactions
+    refreshTransactions: fetchTransactions,
   };
 
   return (
@@ -273,4 +107,12 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({ chil
       {children}
     </TransactionsContext.Provider>
   );
+};
+
+export const useTransactions = () => {
+  const context = useContext(TransactionsContext);
+  if (context === undefined) {
+    throw new Error('useTransactions must be used within a TransactionsProvider');
+  }
+  return context;
 };
