@@ -150,7 +150,7 @@ const EditTransactionForm = ({ transaction, isOpen, onClose }: EditTransactionFo
               <SelectContent>
                 {formData.type === "expense" ? (
                   <>
-                    <SelectItem value="Alimentare">Alimentare</SelectItem>
+                    <SelectItem value="Cumpărături">Cumpărături</SelectItem>
                     <SelectItem value="Transport">Transport</SelectItem>
                     <SelectItem value="Utilități">Utilități</SelectItem>
                     <SelectItem value="Divertisment">Divertisment</SelectItem>
