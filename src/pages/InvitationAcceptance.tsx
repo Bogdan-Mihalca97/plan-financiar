@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,7 +137,12 @@ const InvitationAcceptance = () => {
           title: "Deja membru",
           description: "Ești deja membru al acestei familii",
         });
-        navigate('/family');
+        
+        // Set a flag to prevent auth redirect and go directly to family page
+        localStorage.setItem('skipAuthRedirect', 'true');
+        setTimeout(() => {
+          navigate('/family');
+        }, 500);
         return;
       }
 
@@ -172,7 +176,12 @@ const InvitationAcceptance = () => {
         description: `Te-ai alăturat cu succes familiei ${invitation.family_groups.name}`,
       });
 
-      navigate('/family');
+      // Set a flag to prevent auth redirect and go directly to family page
+      localStorage.setItem('skipAuthRedirect', 'true');
+      setTimeout(() => {
+        navigate('/family');
+      }, 500);
+      
     } catch (error: any) {
       console.error('Error accepting invitation:', error);
       toast({

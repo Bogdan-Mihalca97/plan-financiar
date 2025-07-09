@@ -161,11 +161,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         // Check for pending invitation before redirect
         const pendingInvitation = localStorage.getItem('pendingInvitation');
+        const skipAuthRedirect = localStorage.getItem('skipAuthRedirect');
+        
         if (pendingInvitation) {
           localStorage.removeItem('pendingInvitation');
           setTimeout(() => {
             window.location.href = `/invitation/${pendingInvitation}`;
           }, 500);
+        } else if (skipAuthRedirect) {
+          // Don't redirect if skipAuthRedirect flag is set
+          localStorage.removeItem('skipAuthRedirect');
         } else {
           // Force page reload for clean state
           setTimeout(() => {
