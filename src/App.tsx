@@ -21,6 +21,7 @@ import BudgetsAndGoals from "@/pages/BudgetsAndGoals";
 import Family from "@/pages/Family";
 import Profile from "@/pages/Profile";
 import Reports from "@/pages/Reports";
+import UMLDiagramsPage from "@/pages/UMLDiagrams";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
                       <Route path="/family" element={<Family />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/reports" element={<Reports />} />
+                      <Route path="/uml-diagrams" element={<UMLDiagramsPage />} />
                     </Routes>
                   </BrowserRouter>
                 </TooltipProvider>
