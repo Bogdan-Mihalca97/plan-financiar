@@ -183,7 +183,7 @@ const classNodes: Node[] = [
       background: '#ffffff', 
       border: '3px solid #1f2937', 
       width: '380px', 
-      height: '350px',
+      height: '420px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -218,7 +218,7 @@ const classNodes: Node[] = [
       background: '#ffffff', 
       border: '3px solid #1f2937', 
       width: '380px', 
-      height: '350px',
+      height: '420px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -252,7 +252,7 @@ const classNodes: Node[] = [
       background: '#ffffff', 
       border: '3px solid #1f2937', 
       width: '380px', 
-      height: '320px',
+      height: '390px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -285,7 +285,7 @@ const classNodes: Node[] = [
       background: '#ffffff', 
       border: '3px solid #1f2937', 
       width: '380px', 
-      height: '280px',
+      height: '350px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -319,7 +319,7 @@ const classNodes: Node[] = [
       background: '#ffffff', 
       border: '3px solid #1f2937', 
       width: '380px', 
-      height: '320px',
+      height: '390px',
       borderRadius: '12px',
       padding: '0'
     }
