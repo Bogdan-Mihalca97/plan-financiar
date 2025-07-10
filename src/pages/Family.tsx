@@ -1,4 +1,3 @@
-
 import { useFamily } from "@/contexts/FamilyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -7,6 +6,7 @@ import CreateFamilyForm from "@/components/family/CreateFamilyForm";
 import FamilyMembersList from "@/components/family/FamilyMembersList";
 import InviteMemberForm from "@/components/family/InviteMemberForm";
 import PendingInvitationsCard from "@/components/family/PendingInvitationsCard";
+import ExportFamilyPDF from "@/components/family/ExportFamilyPDF";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,7 @@ const Family = () => {
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <ExportFamilyPDF />
                   {isCreator && (
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       <Settings className="h-3 w-3 mr-1" />
