@@ -153,36 +153,40 @@ const useCaseEdges: Edge[] = [
   { id: 'e6', source: 'admin', target: 'reports', style: { stroke: '#374151', strokeWidth: 3 } }
 ];
 
-// Class Diagram - Updated structure
+// Class Diagram - Updated structure with better formatting
 const classNodes: Node[] = [
   {
     id: 'user-class',
     position: { x: 100, y: 100 },
     data: { 
       label: (
-        <div className="text-left text-sm p-4 w-full">
-          <div className="font-bold border-b-2 border-gray-700 pb-2 mb-3 text-center text-lg">User</div>
-          <div className="text-gray-600 border-b border-gray-300 pb-3 mb-3">
-            <div className="mb-1">- id: UUID</div>
-            <div className="mb-1">- email: string</div>
-            <div className="mb-1">- firstName: string</div>
-            <div className="mb-1">- lastName: string</div>
-            <div className="mb-1">- createdAt: Date</div>
-          </div>
-          <div className="text-gray-800">
-            <div className="mb-1">+ authenticate()</div>
-            <div className="mb-1">+ updateProfile()</div>
-            <div className="mb-1">+ createFamily()</div>
+        <div className="w-full h-full p-3 flex flex-col">
+          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">User</div>
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+              <div>- id: UUID</div>
+              <div>- email: string</div>
+              <div>- firstName: string</div>
+              <div>- lastName: string</div>
+              <div>- createdAt: Date</div>
+            </div>
+            <div className="text-left text-sm space-y-1">
+              <div>+ login()</div>
+              <div>+ logout()</div>
+              <div>+ updateProfile()</div>
+              <div>+ createFamily()</div>
+            </div>
           </div>
         </div>
       )
     },
     style: { 
       background: '#ffffff', 
-      border: '4px solid #1f2937', 
+      border: '3px solid #1f2937', 
       width: '280px', 
-      height: '240px',
-      borderRadius: '12px'
+      height: '260px',
+      borderRadius: '12px',
+      padding: '0'
     }
   },
   
@@ -191,91 +195,134 @@ const classNodes: Node[] = [
     position: { x: 450, y: 100 },
     data: { 
       label: (
-        <div className="text-left text-sm p-4 w-full">
-          <div className="font-bold border-b-2 border-gray-700 pb-2 mb-3 text-center text-lg">Transaction</div>
-          <div className="text-gray-600 border-b border-gray-300 pb-3 mb-3">
-            <div className="mb-1">- id: UUID</div>
-            <div className="mb-1">- amount: number</div>
-            <div className="mb-1">- category: string</div>
-            <div className="mb-1">- description: string</div>
-            <div className="mb-1">- date: Date</div>
-            <div className="mb-1">- type: string</div>
-          </div>
-          <div className="text-gray-800">
-            <div className="mb-1">+ create()</div>
-            <div className="mb-1">+ update()</div>
-            <div className="mb-1">+ delete()</div>
+        <div className="w-full h-full p-3 flex flex-col">
+          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">Transaction</div>
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+              <div>- id: UUID</div>
+              <div>- amount: number</div>
+              <div>- description: string</div>
+              <div>- category: string</div>
+              <div>- type: TransactionType</div>
+              <div>- date: Date</div>
+            </div>
+            <div className="text-left text-sm space-y-1">
+              <div>+ create()</div>
+              <div>+ update()</div>
+              <div>+ delete()</div>
+            </div>
           </div>
         </div>
       )
     },
     style: { 
       background: '#ffffff', 
-      border: '4px solid #1f2937', 
+      border: '3px solid #1f2937', 
       width: '280px', 
-      height: '240px',
-      borderRadius: '12px'
+      height: '260px',
+      borderRadius: '12px',
+      padding: '0'
     }
   },
 
   {
     id: 'budget-class',
-    position: { x: 100, y: 400 },
+    position: { x: 100, y: 420 },
     data: { 
       label: (
-        <div className="text-left text-sm p-4 w-full">
-          <div className="font-bold border-b-2 border-gray-700 pb-2 mb-3 text-center text-lg">Budget</div>
-          <div className="text-gray-600 border-b border-gray-300 pb-3 mb-3">
-            <div className="mb-1">- id: UUID</div>
-            <div className="mb-1">- category: string</div>
-            <div className="mb-1">- limitAmount: number</div>
-            <div className="mb-1">- period: string</div>
-            <div className="mb-1">- userId: UUID</div>
-          </div>
-          <div className="text-gray-800">
-            <div className="mb-1">+ checkLimit()</div>
-            <div className="mb-1">+ updateLimit()</div>
-            <div className="mb-1">+ getSpending()</div>
+        <div className="w-full h-full p-3 flex flex-col">
+          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">Budget</div>
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+              <div>- id: UUID</div>
+              <div>- category: string</div>
+              <div>- limitAmount: number</div>
+              <div>- period: Period</div>
+              <div>- userId: UUID</div>
+            </div>
+            <div className="text-left text-sm space-y-1">
+              <div>+ checkLimit()</div>
+              <div>+ updateLimit()</div>
+              <div>+ getSpending()</div>
+            </div>
           </div>
         </div>
       )
     },
     style: { 
       background: '#ffffff', 
-      border: '4px solid #1f2937', 
+      border: '3px solid #1f2937', 
       width: '280px', 
-      height: '220px',
-      borderRadius: '12px'
+      height: '240px',
+      borderRadius: '12px',
+      padding: '0'
     }
   },
 
   {
     id: 'family-class',
-    position: { x: 450, y: 400 },
+    position: { x: 450, y: 420 },
     data: { 
       label: (
-        <div className="text-left text-sm p-4 w-full">
-          <div className="font-bold border-b-2 border-gray-700 pb-2 mb-3 text-center text-lg">FamilyGroup</div>
-          <div className="text-gray-600 border-b border-gray-300 pb-3 mb-3">
-            <div className="mb-1">- id: UUID</div>
-            <div className="mb-1">- name: string</div>
-            <div className="mb-1">- createdBy: UUID</div>
-            <div className="mb-1">- members: User[]</div>
-          </div>
-          <div className="text-gray-800">
-            <div className="mb-1">+ addMember()</div>
-            <div className="mb-1">+ removeMember()</div>
-            <div className="mb-1">+ inviteMember()</div>
+        <div className="w-full h-full p-3 flex flex-col">
+          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">FamilyGroup</div>
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+              <div>- id: UUID</div>
+              <div>- name: string</div>
+              <div>- createdBy: UUID</div>
+              <div>- members: User[]</div>
+            </div>
+            <div className="text-left text-sm space-y-1">
+              <div>+ addMember()</div>
+              <div>+ removeMember()</div>
+              <div>+ inviteMember()</div>
+            </div>
           </div>
         </div>
       )
     },
     style: { 
       background: '#ffffff', 
-      border: '4px solid #1f2937', 
+      border: '3px solid #1f2937', 
       width: '280px', 
-      height: '200px',
-      borderRadius: '12px'
+      height: '220px',
+      borderRadius: '12px',
+      padding: '0'
+    }
+  },
+
+  {
+    id: 'goal-class',
+    position: { x: 800, y: 260 },
+    data: { 
+      label: (
+        <div className="w-full h-full p-3 flex flex-col">
+          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">Goal</div>
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+              <div>- id: UUID</div>
+              <div>- title: string</div>
+              <div>- targetAmount: number</div>
+              <div>- currentAmount: number</div>
+              <div>- deadline: Date</div>
+            </div>
+            <div className="text-left text-sm space-y-1">
+              <div>+ updateProgress()</div>
+              <div>+ checkDeadline()</div>
+              <div>+ markCompleted()</div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    style: { 
+      background: '#ffffff', 
+      border: '3px solid #1f2937', 
+      width: '280px', 
+      height: '240px',
+      borderRadius: '12px',
+      padding: '0'
     }
   }
 ];
@@ -304,6 +351,15 @@ const classEdges: Edge[] = [
     source: 'user-class', 
     target: 'family-class', 
     label: 'n..n', 
+    style: { stroke: '#1f2937', strokeWidth: 3 },
+    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '14px' },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#1f2937' }
+  },
+  { 
+    id: 'user-goal', 
+    source: 'user-class', 
+    target: 'goal-class', 
+    label: '1..*', 
     style: { stroke: '#1f2937', strokeWidth: 3 },
     labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '14px' },
     markerEnd: { type: MarkerType.ArrowClosed, color: '#1f2937' }
