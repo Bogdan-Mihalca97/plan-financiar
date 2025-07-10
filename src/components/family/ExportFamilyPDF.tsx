@@ -3,11 +3,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Download } from "lucide-react";
 import { useFamily } from "@/contexts/FamilyContext";
+import { useTransactions } from "@/contexts/TransactionsContext";
+import { useGoals } from "@/contexts/GoalsContext";
+import { useBudgets } from "@/contexts/BudgetsContext";
+import { useInvestments } from "@/contexts/InvestmentsContext";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 
 const ExportFamilyPDF = () => {
-  const { currentFamily, familyMembers, familyInvitations } = useFamily();
+  const { currentFamily } = useFamily();
+  const { familyTransactions, getTotalIncome, getTotalExpenses, getBalance } = useTransactions();
+  const { familyGoals } = useGoals();
+  const { familyBudgets } = useBudgets();
+  const { familyInvestments } = useInvestments();
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
 
@@ -29,7 +37,7 @@ const ExportFamilyPDF = () => {
 
       // Title
       doc.setFontSize(20);
-      doc.text('Raport Familie - BugetControl', 20, yPosition);
+      doc.text('Raport Financiar Familie - BugetControl', 20, yPosition);
       yPosition += 20;
 
       // Family name
@@ -37,53 +45,39 @@ const ExportFamilyPDF = () => {
       doc.text(`Familie: ${currentFamily.name}`, 20, yPosition);
       yPosition += 15;
 
-      // Creation date
+      // Date
       doc.setFontSize(12);
-      doc.text(`Creată la: ${new Date(currentFamily.created_at).toLocaleDateString('ro-RO')}`, 20, yPosition);
+      doc.text(`Generat la: ${new Date().toLocaleDateString('ro-RO')}`, 20, yPosition);
       yPosition += 20;
 
-      // Members section
+      // Financial Overview
       doc.setFontSize(14);
-      doc.text('Membri Familie:', 20, yPosition);
+      doc.text('Rezumat Financiar:', 20, yPosition);
       yPosition += 10;
 
       doc.setFontSize(11);
-      familyMembers.forEach((member, index) => {
-        const memberName = member.first_name && member.last_name 
-          ? `${member.first_name} ${member.last_name}`
-          : member.email || 'Nume necunoscut';
-        
-        const roleText = member.role === 'admin' ? 'Administrator' : 'Membru';
-        const joinedDate = new Date(member.joined_at).toLocaleDateString('ro-RO');
-        
-        doc.text(`${index + 1}. ${memberName}`, 25, yPosition);
-        yPosition += 5;
-        doc.text(`   Rol: ${roleText}`, 25, yPosition);
-        yPosition += 5;
-        doc.text(`   Alăturat la: ${joinedDate}`, 25, yPosition);
-        yPosition += 8;
+      doc.text(`Total Venituri: ${getTotalIncome()} Lei`, 25, yPosition);
+      yPosition += 6;
+      doc.text(`Total Cheltuieli: ${getTotalExpenses()} Lei`, 25, yPosition);
+      yPosition += 6;
+      doc.text(`Sold Curent: ${getBalance()} Lei`, 25, yPosition);
+      yPosition += 20;
 
-        // Check if we need a new page
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
-        }
-      });
-
-      // Invitations section
-      if (familyInvitations.length > 0) {
-        yPosition += 10;
+      // Family Transactions
+      if (familyTransactions.length > 0) {
         doc.setFontSize(14);
-        doc.text('Invitații în Așteptare:', 20, yPosition);
+        doc.text('Tranzacții Familie:', 20, yPosition);
         yPosition += 10;
 
-        doc.setFontSize(11);
-        familyInvitations.forEach((invitation, index) => {
-          const invitedDate = new Date(invitation.created_at).toLocaleDateString('ro-RO');
+        doc.setFontSize(9);
+        familyTransactions.slice(0, 20).forEach((transaction, index) => {
+          const date = new Date(transaction.date).toLocaleDateString('ro-RO');
+          const amount = transaction.type === 'income' ? `+${transaction.amount}` : `-${transaction.amount}`;
+          const color = transaction.type === 'income' ? 'green' : 'red';
           
-          doc.text(`${index + 1}. ${invitation.email}`, 25, yPosition);
-          yPosition += 5;
-          doc.text(`   Trimisă la: ${invitedDate}`, 25, yPosition);
+          doc.text(`${date} - ${transaction.description}`, 25, yPosition);
+          yPosition += 4;
+          doc.text(`${amount} Lei (${transaction.category})`, 25, yPosition);
           yPosition += 8;
 
           if (yPosition > 250) {
@@ -91,42 +85,134 @@ const ExportFamilyPDF = () => {
             yPosition = 20;
           }
         });
+        yPosition += 10;
       }
 
-      // Statistics section
-      yPosition += 15;
-      if (yPosition > 220) {
-        doc.addPage();
-        yPosition = 20;
+      // Family Budgets
+      if (familyBudgets.length > 0) {
+        if (yPosition > 200) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.text('Bugete Familie:', 20, yPosition);
+        yPosition += 10;
+
+        doc.setFontSize(11);
+        familyBudgets.forEach((budget, index) => {
+          doc.text(`${budget.category}: ${budget.limit_amount} Lei (${budget.period})`, 25, yPosition);
+          yPosition += 8;
+
+          if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 20;
+          }
+        });
+        yPosition += 15;
       }
 
-      doc.setFontSize(14);
-      doc.text('Statistici Familie:', 20, yPosition);
-      yPosition += 10;
+      // Family Goals
+      if (familyGoals.length > 0) {
+        if (yPosition > 200) {
+          doc.addPage();
+          yPosition = 20;
+        }
 
-      doc.setFontSize(11);
-      doc.text(`Total membri: ${familyMembers.length}`, 25, yPosition);
-      yPosition += 6;
-      doc.text(`Invitații în așteptare: ${familyInvitations.length}`, 25, yPosition);
-      yPosition += 6;
+        doc.setFontSize(14);
+        doc.text('Obiective Familie:', 20, yPosition);
+        yPosition += 10;
 
-      const adminCount = familyMembers.filter(m => m.role === 'admin').length;
-      doc.text(`Administratori: ${adminCount}`, 25, yPosition);
-      yPosition += 6;
+        doc.setFontSize(11);
+        familyGoals.forEach((goal, index) => {
+          const progress = ((goal.current_amount / goal.target_amount) * 100).toFixed(1);
+          const deadline = new Date(goal.deadline).toLocaleDateString('ro-RO');
+          
+          doc.text(`${goal.title}`, 25, yPosition);
+          yPosition += 5;
+          doc.text(`Progres: ${goal.current_amount}/${goal.target_amount} Lei (${progress}%)`, 25, yPosition);
+          yPosition += 5;
+          doc.text(`Termen limită: ${deadline}`, 25, yPosition);
+          yPosition += 10;
+
+          if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 20;
+          }
+        });
+        yPosition += 15;
+      }
+
+      // Family Investments
+      if (familyInvestments.length > 0) {
+        if (yPosition > 200) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.text('Investiții Familie:', 20, yPosition);
+        yPosition += 10;
+
+        doc.setFontSize(11);
+        let totalInvestmentValue = 0;
+        let totalInvestmentCost = 0;
+
+        familyInvestments.forEach((investment, index) => {
+          const currentValue = investment.current_price * investment.quantity;
+          const purchaseValue = investment.purchase_price * investment.quantity;
+          const profit = currentValue - purchaseValue;
+          const profitPercent = ((profit / purchaseValue) * 100).toFixed(2);
+          
+          totalInvestmentValue += currentValue;
+          totalInvestmentCost += purchaseValue;
+
+          doc.text(`${investment.name} (${investment.symbol || investment.type})`, 25, yPosition);
+          yPosition += 5;
+          doc.text(`Cantitate: ${investment.quantity} | Preț actual: ${investment.current_price} Lei`, 25, yPosition);
+          yPosition += 5;
+          doc.text(`Valoare actuală: ${currentValue.toFixed(2)} Lei | Profit: ${profit.toFixed(2)} Lei (${profitPercent}%)`, 25, yPosition);
+          yPosition += 10;
+
+          if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 20;
+          }
+        });
+
+        // Investment summary
+        const totalProfit = totalInvestmentValue - totalInvestmentCost;
+        const totalProfitPercent = ((totalProfit / totalInvestmentCost) * 100).toFixed(2);
+        
+        yPosition += 5;
+        doc.setFontSize(12);
+        doc.text('Rezumat Investiții:', 25, yPosition);
+        yPosition += 8;
+        doc.setFontSize(11);
+        doc.text(`Valoare totală: ${totalInvestmentValue.toFixed(2)} Lei`, 25, yPosition);
+        yPosition += 6;
+        doc.text(`Cost total: ${totalInvestmentCost.toFixed(2)} Lei`, 25, yPosition);
+        yPosition += 6;
+        doc.text(`Profit total: ${totalProfit.toFixed(2)} Lei (${totalProfitPercent}%)`, 25, yPosition);
+      }
 
       // Footer
       yPosition += 20;
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 20;
+      }
       doc.setFontSize(8);
       doc.text(`Generat la: ${new Date().toLocaleString('ro-RO')}`, 20, yPosition);
       doc.text('BugetControl - Gestionarea bugetului familiei', 20, yPosition + 5);
 
       // Save the PDF
-      const fileName = `Familie_${currentFamily.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `Raport_Financiar_${currentFamily.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
       toast({
         title: "Export Reușit",
-        description: "Raportul familiei a fost descărcat cu succes",
+        description: "Raportul financiar al familiei a fost descărcat cu succes",
       });
 
     } catch (error) {
@@ -161,7 +247,7 @@ const ExportFamilyPDF = () => {
       ) : (
         <>
           <FileText className="h-4 w-4" />
-          Export PDF
+          Export Raport Financiar
         </>
       )}
     </Button>
