@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   ReactFlow,
@@ -153,24 +152,24 @@ const useCaseEdges: Edge[] = [
   { id: 'e6', source: 'admin', target: 'reports', style: { stroke: '#374151', strokeWidth: 3 } }
 ];
 
-// Class Diagram - Updated structure with better formatting
+// Class Diagram - Updated structure with better formatting and larger boxes
 const classNodes: Node[] = [
   {
     id: 'user-class',
     position: { x: 100, y: 100 },
     data: { 
       label: (
-        <div className="w-full h-full p-3 flex flex-col">
-          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">User</div>
+        <div className="w-full h-full p-4 flex flex-col">
+          <div className="text-center font-bold text-xl border-b-2 border-gray-800 pb-3 mb-4">User</div>
           <div className="flex-1 flex flex-col justify-between">
-            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+            <div className="text-left text-base space-y-2 pb-4 mb-4 border-b border-gray-400">
               <div>- id: UUID</div>
               <div>- email: string</div>
               <div>- firstName: string</div>
               <div>- lastName: string</div>
               <div>- createdAt: Date</div>
             </div>
-            <div className="text-left text-sm space-y-1">
+            <div className="text-left text-base space-y-2">
               <div>+ login()</div>
               <div>+ logout()</div>
               <div>+ updateProfile()</div>
@@ -183,8 +182,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '280px', 
-      height: '260px',
+      width: '320px', 
+      height: '300px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -192,13 +191,13 @@ const classNodes: Node[] = [
   
   {
     id: 'transaction-class',
-    position: { x: 450, y: 100 },
+    position: { x: 480, y: 100 },
     data: { 
       label: (
-        <div className="w-full h-full p-3 flex flex-col">
-          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">Transaction</div>
+        <div className="w-full h-full p-4 flex flex-col">
+          <div className="text-center font-bold text-xl border-b-2 border-gray-800 pb-3 mb-4">Transaction</div>
           <div className="flex-1 flex flex-col justify-between">
-            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+            <div className="text-left text-base space-y-2 pb-4 mb-4 border-b border-gray-400">
               <div>- id: UUID</div>
               <div>- amount: number</div>
               <div>- description: string</div>
@@ -206,7 +205,7 @@ const classNodes: Node[] = [
               <div>- type: TransactionType</div>
               <div>- date: Date</div>
             </div>
-            <div className="text-left text-sm space-y-1">
+            <div className="text-left text-base space-y-2">
               <div>+ create()</div>
               <div>+ update()</div>
               <div>+ delete()</div>
@@ -218,8 +217,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '280px', 
-      height: '260px',
+      width: '320px', 
+      height: '300px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -227,20 +226,20 @@ const classNodes: Node[] = [
 
   {
     id: 'budget-class',
-    position: { x: 100, y: 420 },
+    position: { x: 100, y: 460 },
     data: { 
       label: (
-        <div className="w-full h-full p-3 flex flex-col">
-          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">Budget</div>
+        <div className="w-full h-full p-4 flex flex-col">
+          <div className="text-center font-bold text-xl border-b-2 border-gray-800 pb-3 mb-4">Budget</div>
           <div className="flex-1 flex flex-col justify-between">
-            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+            <div className="text-left text-base space-y-2 pb-4 mb-4 border-b border-gray-400">
               <div>- id: UUID</div>
               <div>- category: string</div>
               <div>- limitAmount: number</div>
               <div>- period: Period</div>
               <div>- userId: UUID</div>
             </div>
-            <div className="text-left text-sm space-y-1">
+            <div className="text-left text-base space-y-2">
               <div>+ checkLimit()</div>
               <div>+ updateLimit()</div>
               <div>+ getSpending()</div>
@@ -252,8 +251,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '280px', 
-      height: '240px',
+      width: '320px', 
+      height: '280px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -261,19 +260,19 @@ const classNodes: Node[] = [
 
   {
     id: 'family-class',
-    position: { x: 450, y: 420 },
+    position: { x: 480, y: 460 },
     data: { 
       label: (
-        <div className="w-full h-full p-3 flex flex-col">
-          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">FamilyGroup</div>
+        <div className="w-full h-full p-4 flex flex-col">
+          <div className="text-center font-bold text-xl border-b-2 border-gray-800 pb-3 mb-4">FamilyGroup</div>
           <div className="flex-1 flex flex-col justify-between">
-            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+            <div className="text-left text-base space-y-2 pb-4 mb-4 border-b border-gray-400">
               <div>- id: UUID</div>
               <div>- name: string</div>
               <div>- createdBy: UUID</div>
               <div>- members: User[]</div>
             </div>
-            <div className="text-left text-sm space-y-1">
+            <div className="text-left text-base space-y-2">
               <div>+ addMember()</div>
               <div>+ removeMember()</div>
               <div>+ inviteMember()</div>
@@ -285,8 +284,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '280px', 
-      height: '220px',
+      width: '320px', 
+      height: '260px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -294,20 +293,20 @@ const classNodes: Node[] = [
 
   {
     id: 'goal-class',
-    position: { x: 800, y: 260 },
+    position: { x: 860, y: 280 },
     data: { 
       label: (
-        <div className="w-full h-full p-3 flex flex-col">
-          <div className="text-center font-bold text-lg border-b-2 border-gray-800 pb-2 mb-3">Goal</div>
+        <div className="w-full h-full p-4 flex flex-col">
+          <div className="text-center font-bold text-xl border-b-2 border-gray-800 pb-3 mb-4">Goal</div>
           <div className="flex-1 flex flex-col justify-between">
-            <div className="text-left text-sm space-y-1 pb-3 mb-3 border-b border-gray-400">
+            <div className="text-left text-base space-y-2 pb-4 mb-4 border-b border-gray-400">
               <div>- id: UUID</div>
               <div>- title: string</div>
               <div>- targetAmount: number</div>
               <div>- currentAmount: number</div>
               <div>- deadline: Date</div>
             </div>
-            <div className="text-left text-sm space-y-1">
+            <div className="text-left text-base space-y-2">
               <div>+ updateProgress()</div>
               <div>+ checkDeadline()</div>
               <div>+ markCompleted()</div>
@@ -319,8 +318,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '280px', 
-      height: '240px',
+      width: '320px', 
+      height: '280px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -334,7 +333,7 @@ const classEdges: Edge[] = [
     target: 'transaction-class', 
     label: '1..*', 
     style: { stroke: '#1f2937', strokeWidth: 3 },
-    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '14px' },
+    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '16px' },
     markerEnd: { type: MarkerType.ArrowClosed, color: '#1f2937' }
   },
   { 
@@ -343,7 +342,7 @@ const classEdges: Edge[] = [
     target: 'budget-class', 
     label: '1..*', 
     style: { stroke: '#1f2937', strokeWidth: 3 },
-    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '14px' },
+    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '16px' },
     markerEnd: { type: MarkerType.ArrowClosed, color: '#1f2937' }
   },
   { 
@@ -352,7 +351,7 @@ const classEdges: Edge[] = [
     target: 'family-class', 
     label: 'n..n', 
     style: { stroke: '#1f2937', strokeWidth: 3 },
-    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '14px' },
+    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '16px' },
     markerEnd: { type: MarkerType.ArrowClosed, color: '#1f2937' }
   },
   { 
@@ -361,7 +360,7 @@ const classEdges: Edge[] = [
     target: 'goal-class', 
     label: '1..*', 
     style: { stroke: '#1f2937', strokeWidth: 3 },
-    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '14px' },
+    labelStyle: { fill: '#1f2937', fontWeight: 'bold', fontSize: '16px' },
     markerEnd: { type: MarkerType.ArrowClosed, color: '#1f2937' }
   }
 ];
