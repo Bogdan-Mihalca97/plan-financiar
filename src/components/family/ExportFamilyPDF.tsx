@@ -13,8 +13,8 @@ import jsPDF from 'jspdf';
 const ExportFamilyPDF = () => {
   const { currentFamily } = useFamily();
   const { familyTransactions, getTotalIncome, getTotalExpenses, getBalance } = useTransactions();
-  const { familyGoals } = useGoals();
-  const { familyBudgets } = useBudgets();
+  const { goals, familyGoals } = useGoals();
+  const { budgets, familyBudgets } = useBudgets();
   const { familyInvestments } = useInvestments();
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
@@ -166,7 +166,38 @@ const ExportFamilyPDF = () => {
         yPosition += 10;
       }
 
-      // Budgets Section
+      // Personal Budgets Section
+      if (budgets.length > 0) {
+        if (yPosition > 200) {
+          doc.addPage();
+          yPosition = 30;
+        }
+
+        addSectionHeader('📋 Bugete Personale', secondaryColor);
+        
+        budgets.forEach((budget) => {
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 30;
+          }
+          
+          addColoredRect(margin, yPosition, contentWidth, 20, lightGrayColor);
+          
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(budget.category, margin + 5, yPosition + 8);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Limită: ${budget.limit_amount} Lei`, margin + 5, yPosition + 15);
+          doc.text(`Perioada: ${budget.period}`, margin + 120, yPosition + 15);
+          
+          yPosition += 25;
+        });
+        yPosition += 10;
+      }
+
+      // Family Budgets Section
       if (familyBudgets.length > 0) {
         if (yPosition > 200) {
           doc.addPage();
@@ -197,7 +228,46 @@ const ExportFamilyPDF = () => {
         yPosition += 10;
       }
 
-      // Goals Section
+      // Personal Goals Section
+      if (goals.length > 0) {
+        if (yPosition > 180) {
+          doc.addPage();
+          yPosition = 30;
+        }
+
+        addSectionHeader('🎯 Obiective Personale', secondaryColor);
+        
+        goals.forEach((goal) => {
+          if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 30;
+          }
+          
+          const progress = ((goal.current_amount / goal.target_amount) * 100);
+          const deadline = new Date(goal.deadline).toLocaleDateString('ro-RO');
+          
+          addColoredRect(margin, yPosition, contentWidth, 25, lightGrayColor);
+          
+          // Progress bar
+          const progressBarWidth = (contentWidth - 20) * (progress / 100);
+          addColoredRect(margin + 10, yPosition + 18, progressBarWidth, 4, successColor);
+          
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(goal.title, margin + 5, yPosition + 8);
+          
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${goal.current_amount}/${goal.target_amount} Lei (${progress.toFixed(1)}%)`, margin + 5, yPosition + 15);
+          doc.text(`Termen: ${deadline}`, margin + 120, yPosition + 15);
+          
+          yPosition += 30;
+        });
+        yPosition += 10;
+      }
+
+      // Family Goals Section
       if (familyGoals.length > 0) {
         if (yPosition > 180) {
           doc.addPage();
