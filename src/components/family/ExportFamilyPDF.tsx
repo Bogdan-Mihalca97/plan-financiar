@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Download } from "lucide-react";
@@ -32,7 +31,11 @@ const ExportFamilyPDF = () => {
     setIsExporting(true);
 
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF('p', 'mm', 'a4');
+      
+      // Configure for UTF-8 text support
+      doc.setLanguage("ro");
+      
       let yPosition = 30;
       const pageWidth = doc.internal.pageSize.width;
       const margin = 20;
@@ -45,6 +48,29 @@ const ExportFamilyPDF = () => {
       const dangerColor = [239, 68, 68]; // Red
       const grayColor = [107, 114, 128]; // Gray
       const lightGrayColor = [243, 244, 246]; // Light gray
+
+      // Helper function to safely add text with Romanian characters
+      const addText = (text: string, x: number, y: number) => {
+        // Convert Romanian characters to proper encoding
+        const romanianText = text
+          .replace(/ă/g, 'ă').replace(/Ă/g, 'Ă')
+          .replace(/â/g, 'â').replace(/Â/g, 'Â')
+          .replace(/î/g, 'î').replace(/Î/g, 'Î')
+          .replace(/ș/g, 'ș').replace(/Ș/g, 'Ș')
+          .replace(/ț/g, 'ț').replace(/Ț/g, 'Ț');
+        
+        try {
+          doc.text(romanianText, x, y);
+        } catch (error) {
+          // Fallback for unsupported characters
+          const fallbackText = text
+            .replace(/[ăâ]/g, 'a').replace(/[ĂÂ]/g, 'A')
+            .replace(/[îÎ]/g, 'i')
+            .replace(/[șŞ]/g, 's').replace(/[ȘŞ]/g, 'S')
+            .replace(/[țŢ]/g, 't').replace(/[ȚŢ]/g, 'T');
+          doc.text(fallbackText, x, y);
+        }
+      };
 
       // Helper function to add colored rectangle
       const addColoredRect = (x: number, y: number, width: number, height: number, color: number[]) => {
@@ -63,7 +89,7 @@ const ExportFamilyPDF = () => {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(title, margin + 5, yPosition + 3);
+        addText(title, margin + 5, yPosition + 3);
         yPosition += 20;
         doc.setTextColor(0, 0, 0);
       };
@@ -76,11 +102,11 @@ const ExportFamilyPDF = () => {
         doc.setTextColor(textColor[0], textColor[1], textColor[2]);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(label, margin + 5, yPosition + 8);
+        addText(label, margin + 5, yPosition + 8);
         
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(value, margin + 5, yPosition + 18);
+        addText(value, margin + 5, yPosition + 18);
         
         doc.setTextColor(0, 0, 0);
       };
@@ -90,11 +116,11 @@ const ExportFamilyPDF = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('BugetControl - Raport Financiar', margin, 16);
+      addText('BugetControl - Raport Financiar', margin, 16);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generat la: ${new Date().toLocaleDateString('ro-RO')}`, pageWidth - 80, 16);
+      addText(`Generat la: ${new Date().toLocaleDateString('ro-RO')}`, pageWidth - 80, 16);
       
       yPosition = 40;
       doc.setTextColor(0, 0, 0);
@@ -102,7 +128,7 @@ const ExportFamilyPDF = () => {
       // Family info
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Familie: ${currentFamily.name}`, margin, yPosition);
+      addText(`Familie: ${currentFamily.name}`, margin, yPosition);
       yPosition += 25;
 
       // Financial Overview Section
@@ -127,10 +153,10 @@ const ExportFamilyPDF = () => {
         addColoredRect(margin, yPosition, contentWidth, 8, lightGrayColor);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text('Data', margin + 5, yPosition + 5);
-        doc.text('Descriere', margin + 40, yPosition + 5);
-        doc.text('Suma', margin + 120, yPosition + 5);
-        doc.text('Categorie', margin + 150, yPosition + 5);
+        addText('Data', margin + 5, yPosition + 5);
+        addText('Descriere', margin + 40, yPosition + 5);
+        addText('Suma', margin + 120, yPosition + 5);
+        addText('Categorie', margin + 150, yPosition + 5);
         yPosition += 12;
 
         doc.setFont('helvetica', 'normal');
@@ -150,16 +176,16 @@ const ExportFamilyPDF = () => {
           }
           
           doc.setTextColor(0, 0, 0);
-          doc.text(date, margin + 5, yPosition + 3);
-          doc.text(transaction.description.substring(0, 25) + (transaction.description.length > 25 ? '...' : ''), margin + 40, yPosition + 3);
+          addText(date, margin + 5, yPosition + 3);
+          addText(transaction.description.substring(0, 25) + (transaction.description.length > 25 ? '...' : ''), margin + 40, yPosition + 3);
           
           doc.setTextColor(color[0], color[1], color[2]);
           doc.setFont('helvetica', 'bold');
-          doc.text(`${amount} Lei`, margin + 120, yPosition + 3);
+          addText(`${amount} Lei`, margin + 120, yPosition + 3);
           
           doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
           doc.setFont('helvetica', 'normal');
-          doc.text(transaction.category, margin + 150, yPosition + 3);
+          addText(transaction.category, margin + 150, yPosition + 3);
           
           yPosition += 10;
         });
@@ -186,11 +212,11 @@ const ExportFamilyPDF = () => {
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.text(budget.category, margin + 5, yPosition + 8);
+          addText(budget.category, margin + 5, yPosition + 8);
           
           doc.setFont('helvetica', 'normal');
-          doc.text(`Limită: ${budget.limit_amount} Lei`, margin + 5, yPosition + 15);
-          doc.text(`Perioada: ${budget.period}`, margin + 120, yPosition + 15);
+          addText(`Limită: ${budget.limit_amount} Lei`, margin + 5, yPosition + 15);
+          addText(`Perioada: ${budget.period}`, margin + 120, yPosition + 15);
           
           yPosition += 25;
         });
@@ -217,11 +243,11 @@ const ExportFamilyPDF = () => {
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.text(budget.category, margin + 5, yPosition + 8);
+          addText(budget.category, margin + 5, yPosition + 8);
           
           doc.setFont('helvetica', 'normal');
-          doc.text(`Limită: ${budget.limit_amount} Lei`, margin + 5, yPosition + 15);
-          doc.text(`Perioada: ${budget.period}`, margin + 120, yPosition + 15);
+          addText(`Limită: ${budget.limit_amount} Lei`, margin + 5, yPosition + 15);
+          addText(`Perioada: ${budget.period}`, margin + 120, yPosition + 15);
           
           yPosition += 25;
         });
@@ -255,12 +281,12 @@ const ExportFamilyPDF = () => {
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.text(goal.title, margin + 5, yPosition + 8);
+          addText(goal.title, margin + 5, yPosition + 8);
           
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
-          doc.text(`${goal.current_amount}/${goal.target_amount} Lei (${progress.toFixed(1)}%)`, margin + 5, yPosition + 15);
-          doc.text(`Termen: ${deadline}`, margin + 120, yPosition + 15);
+          addText(`${goal.current_amount}/${goal.target_amount} Lei (${progress.toFixed(1)}%)`, margin + 5, yPosition + 15);
+          addText(`Termen: ${deadline}`, margin + 120, yPosition + 15);
           
           yPosition += 30;
         });
@@ -294,12 +320,12 @@ const ExportFamilyPDF = () => {
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.text(goal.title, margin + 5, yPosition + 8);
+          addText(goal.title, margin + 5, yPosition + 8);
           
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
-          doc.text(`${goal.current_amount}/${goal.target_amount} Lei (${progress.toFixed(1)}%)`, margin + 5, yPosition + 15);
-          doc.text(`Termen: ${deadline}`, margin + 120, yPosition + 15);
+          addText(`${goal.current_amount}/${goal.target_amount} Lei (${progress.toFixed(1)}%)`, margin + 5, yPosition + 15);
+          addText(`Termen: ${deadline}`, margin + 120, yPosition + 15);
           
           yPosition += 30;
         });
@@ -340,15 +366,15 @@ const ExportFamilyPDF = () => {
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.text(`${investment.name} (${investment.symbol || investment.type})`, margin + 5, yPosition + 8);
+          addText(`${investment.name} (${investment.symbol || investment.type})`, margin + 5, yPosition + 8);
           
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
-          doc.text(`Cantitate: ${investment.quantity} | Preț: ${investment.current_price} Lei`, margin + 5, yPosition + 15);
+          addText(`Cantitate: ${investment.quantity} | Preț: ${investment.current_price} Lei`, margin + 5, yPosition + 15);
           
           doc.setTextColor(profitColor[0], profitColor[1], profitColor[2]);
           doc.setFont('helvetica', 'bold');
-          doc.text(`Valoare: ${currentValue.toFixed(2)} Lei | Profit: ${profit.toFixed(2)} Lei (${profitPercent.toFixed(2)}%)`, margin + 5, yPosition + 22);
+          addText(`Valoare: ${currentValue.toFixed(2)} Lei | Profit: ${profit.toFixed(2)} Lei (${profitPercent.toFixed(2)}%)`, margin + 5, yPosition + 22);
           
           yPosition += 30;
         });
@@ -375,8 +401,8 @@ const ExportFamilyPDF = () => {
         addColoredRect(0, doc.internal.pageSize.height - 15, pageWidth, 15, primaryColor);
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
-        doc.text(`BugetControl - ${currentFamily.name}`, margin, doc.internal.pageSize.height - 5);
-        doc.text(`Pagina ${i} din ${totalPages}`, pageWidth - 40, doc.internal.pageSize.height - 5);
+        addText(`BugetControl - ${currentFamily.name}`, margin, doc.internal.pageSize.height - 5);
+        addText(`Pagina ${i} din ${totalPages}`, pageWidth - 40, doc.internal.pageSize.height - 5);
       }
 
       // Save the PDF
