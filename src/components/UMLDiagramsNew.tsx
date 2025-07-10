@@ -156,7 +156,7 @@ const useCaseEdges: Edge[] = [
 const classNodes: Node[] = [
   {
     id: 'user-class',
-    position: { x: 100, y: 100 },
+    position: { x: 50, y: 50 },
     data: { 
       label: (
         <div className="w-full h-full p-4 flex flex-col">
@@ -191,7 +191,7 @@ const classNodes: Node[] = [
   
   {
     id: 'transaction-class',
-    position: { x: 480, y: 100 },
+    position: { x: 600, y: 50 },
     data: { 
       label: (
         <div className="w-full h-full p-4 flex flex-col">
@@ -226,7 +226,7 @@ const classNodes: Node[] = [
 
   {
     id: 'budget-class',
-    position: { x: 100, y: 460 },
+    position: { x: 50, y: 500 },
     data: { 
       label: (
         <div className="w-full h-full p-4 flex flex-col">
@@ -260,7 +260,7 @@ const classNodes: Node[] = [
 
   {
     id: 'family-class',
-    position: { x: 480, y: 460 },
+    position: { x: 600, y: 500 },
     data: { 
       label: (
         <div className="w-full h-full p-4 flex flex-col">
@@ -293,7 +293,7 @@ const classNodes: Node[] = [
 
   {
     id: 'goal-class',
-    position: { x: 860, y: 280 },
+    position: { x: 1150, y: 275 },
     data: { 
       label: (
         <div className="w-full h-full p-4 flex flex-col">
