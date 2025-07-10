@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   ReactFlow,
@@ -7,6 +6,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from "@/components/ui/button";
@@ -425,99 +425,115 @@ const sequenceNodes: Node[] = [
     data: { label: 'Utilizator' },
     style: { 
       background: '#e3f2fd', 
-      border: '2px solid #1976d2', 
-      width: '120px', 
-      height: '60px',
-      borderRadius: '8px',
-      fontWeight: 'bold'
+      border: '3px solid #1976d2', 
+      width: '140px', 
+      height: '80px',
+      borderRadius: '12px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
   },
   {
     id: 'ui-seq',
-    position: { x: 280, y: 50 },
+    position: { x: 300, y: 50 },
     data: { label: 'UI Component' },
     style: { 
       background: '#e8f5e8', 
-      border: '2px solid #388e3c', 
-      width: '120px', 
-      height: '60px',
-      borderRadius: '8px',
-      fontWeight: 'bold'
+      border: '3px solid #388e3c', 
+      width: '140px', 
+      height: '80px',
+      borderRadius: '12px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
   },
   {
     id: 'context-seq',
-    position: { x: 460, y: 50 },
+    position: { x: 500, y: 50 },
     data: { label: 'Context' },
     style: { 
       background: '#fff3e0', 
-      border: '2px solid #f57c00', 
-      width: '120px', 
-      height: '60px',
-      borderRadius: '8px',
-      fontWeight: 'bold'
+      border: '3px solid #f57c00', 
+      width: '140px', 
+      height: '80px',
+      borderRadius: '12px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
   },
   {
     id: 'supabase-seq',
-    position: { x: 640, y: 50 },
+    position: { x: 700, y: 50 },
     data: { label: 'Supabase' },
     style: { 
       background: '#fce4ec', 
-      border: '2px solid #c2185b', 
-      width: '120px', 
-      height: '60px',
-      borderRadius: '8px',
-      fontWeight: 'bold'
+      border: '3px solid #c2185b', 
+      width: '140px', 
+      height: '80px',
+      borderRadius: '12px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
   },
   
   // Lifelines - Vertical dashed lines
   {
     id: 'lifeline-user',
-    position: { x: 158, y: 140 },
+    position: { x: 168, y: 160 },
     data: { label: '' },
     style: { 
       background: 'transparent', 
-      border: '2px dashed #666', 
+      border: '3px dashed #666', 
       width: '4px', 
-      height: '400px',
+      height: '500px',
       borderRadius: '0px'
     }
   },
   {
     id: 'lifeline-ui',
-    position: { x: 338, y: 140 },
+    position: { x: 368, y: 160 },
     data: { label: '' },
     style: { 
       background: 'transparent', 
-      border: '2px dashed #666', 
+      border: '3px dashed #666', 
       width: '4px', 
-      height: '400px',
+      height: '500px',
       borderRadius: '0px'
     }
   },
   {
     id: 'lifeline-context',
-    position: { x: 518, y: 140 },
+    position: { x: 568, y: 160 },
     data: { label: '' },
     style: { 
       background: 'transparent', 
-      border: '2px dashed #666', 
+      border: '3px dashed #666', 
       width: '4px', 
-      height: '400px',
+      height: '500px',
       borderRadius: '0px'
     }
   },
   {
     id: 'lifeline-supabase',
-    position: { x: 698, y: 140 },
+    position: { x: 768, y: 160 },
     data: { label: '' },
     style: { 
       background: 'transparent', 
-      border: '2px dashed #666', 
+      border: '3px dashed #666', 
       width: '4px', 
-      height: '400px',
+      height: '500px',
       borderRadius: '0px'
     }
   },
@@ -525,62 +541,67 @@ const sequenceNodes: Node[] = [
   // Messages/Actions
   {
     id: 'action1',
-    position: { x: 80, y: 180 },
+    position: { x: 80, y: 220 },
     data: { label: '1. Completează formular' },
     style: { 
-      background: '#f5f5f5', 
-      border: '1px solid #999', 
-      fontSize: '12px',
-      padding: '4px 8px',
-      borderRadius: '4px'
+      background: '#ffffff', 
+      border: '2px solid #333', 
+      fontSize: '14px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      fontWeight: '500'
     }
   },
   {
     id: 'action2',
-    position: { x: 250, y: 240 },
+    position: { x: 280, y: 320 },
     data: { label: '2. Validare date' },
     style: { 
-      background: '#f5f5f5', 
-      border: '1px solid #999', 
-      fontSize: '12px',
-      padding: '4px 8px',
-      borderRadius: '4px'
+      background: '#ffffff', 
+      border: '2px solid #333', 
+      fontSize: '14px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      fontWeight: '500'
     }
   },
   {
     id: 'action3',
-    position: { x: 450, y: 300 },
+    position: { x: 480, y: 420 },
     data: { label: '3. Salvare în DB' },
     style: { 
-      background: '#f5f5f5', 
-      border: '1px solid #999', 
-      fontSize: '12px',
-      padding: '4px 8px',
-      borderRadius: '4px'
+      background: '#ffffff', 
+      border: '2px solid #333', 
+      fontSize: '14px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      fontWeight: '500'
     }
   },
   {
     id: 'action4',
-    position: { x: 450, y: 360 },
+    position: { x: 480, y: 520 },
     data: { label: '4. Confirmare' },
     style: { 
-      background: '#f5f5f5', 
-      border: '1px solid #999', 
-      fontSize: '12px',
-      padding: '4px 8px',
-      borderRadius: '4px'
+      background: '#ffffff', 
+      border: '2px solid #333', 
+      fontSize: '14px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      fontWeight: '500'
     }
   },
   {
     id: 'action5',
-    position: { x: 250, y: 420 },
+    position: { x: 280, y: 620 },
     data: { label: '5. Actualizare UI' },
     style: { 
-      background: '#f5f5f5', 
-      border: '1px solid #999', 
-      fontSize: '12px',
-      padding: '4px 8px',
-      borderRadius: '4px'
+      background: '#ffffff', 
+      border: '2px solid #333', 
+      fontSize: '14px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      fontWeight: '500'
     }
   },
 ];
@@ -594,8 +615,9 @@ const sequenceEdges: Edge[] = [
     type: 'straight', 
     animated: true, 
     label: 'submit',
-    style: { stroke: '#2196f3', strokeWidth: 2 },
-    markerEnd: { type: 'arrowclosed', color: '#2196f3' }
+    style: { stroke: '#2196f3', strokeWidth: 3 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#2196f3' },
+    labelStyle: { fill: '#2196f3', fontWeight: 'bold', fontSize: '14px' }
   },
   { 
     id: 'msg2', 
@@ -604,8 +626,9 @@ const sequenceEdges: Edge[] = [
     type: 'straight', 
     animated: true, 
     label: 'create',
-    style: { stroke: '#4caf50', strokeWidth: 2 },
-    markerEnd: { type: 'arrowclosed', color: '#4caf50' }
+    style: { stroke: '#4caf50', strokeWidth: 3 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#4caf50' },
+    labelStyle: { fill: '#4caf50', fontWeight: 'bold', fontSize: '14px' }
   },
   { 
     id: 'msg3', 
@@ -614,8 +637,9 @@ const sequenceEdges: Edge[] = [
     type: 'straight', 
     animated: true, 
     label: 'success',
-    style: { stroke: '#ff9800', strokeWidth: 2 },
-    markerEnd: { type: 'arrowclosed', color: '#ff9800' }
+    style: { stroke: '#ff9800', strokeWidth: 3 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#ff9800' },
+    labelStyle: { fill: '#ff9800', fontWeight: 'bold', fontSize: '14px' }
   },
   { 
     id: 'msg4', 
@@ -624,8 +648,9 @@ const sequenceEdges: Edge[] = [
     type: 'straight', 
     animated: true, 
     label: 'refresh',
-    style: { stroke: '#e91e63', strokeWidth: 2 },
-    markerEnd: { type: 'arrowclosed', color: '#e91e63' }
+    style: { stroke: '#e91e63', strokeWidth: 3 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#e91e63' },
+    labelStyle: { fill: '#e91e63', fontWeight: 'bold', fontSize: '14px' }
   },
 ];
 
