@@ -182,8 +182,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '320px', 
-      height: '300px',
+      width: '380px', 
+      height: '350px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -217,8 +217,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '320px', 
-      height: '300px',
+      width: '380px', 
+      height: '350px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -251,8 +251,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '320px', 
-      height: '280px',
+      width: '380px', 
+      height: '320px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -284,8 +284,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '320px', 
-      height: '260px',
+      width: '380px', 
+      height: '280px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -318,8 +318,8 @@ const classNodes: Node[] = [
     style: { 
       background: '#ffffff', 
       border: '3px solid #1f2937', 
-      width: '320px', 
-      height: '280px',
+      width: '380px', 
+      height: '320px',
       borderRadius: '12px',
       padding: '0'
     }
@@ -662,11 +662,11 @@ const UMLDiagramsNew = () => {
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
-          zoomOnScroll={false}
-          zoomOnPinch={false}
-          zoomOnDoubleClick={false}
-          panOnScroll={false}
-          panOnDrag={false}
+          zoomOnScroll={true}
+          zoomOnPinch={true}
+          zoomOnDoubleClick={true}
+          panOnScroll={true}
+          panOnDrag={true}
           style={{ background: '#ffffff' }}
         >
           <Background color="#e5e7eb" gap={20} size={2} />
