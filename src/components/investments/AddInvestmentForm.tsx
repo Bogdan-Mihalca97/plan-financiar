@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
     quantity: "",
     purchase_date: "",
   });
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -53,11 +55,99 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
     "Altele"
   ];
 
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    // Validare nume
+    if (!formData.name.trim()) {
+      newErrors.name = "Numele investiției este obligatoriu";
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Numele trebuie să aibă cel puțin 2 caractere";
+    } else if (formData.name.trim().length > 100) {
+      newErrors.name = "Numele nu poate avea mai mult de 100 de caractere";
+    }
+
+    // Validare tip
+    if (!formData.type) {
+      newErrors.type = "Tipul investiției este obligatoriu";
+    }
+
+    // Validare preț cumpărare
+    if (!formData.purchase_price) {
+      newErrors.purchase_price = "Prețul de cumpărare este obligatoriu";
+    } else {
+      const price = parseFloat(formData.purchase_price);
+      if (isNaN(price)) {
+        newErrors.purchase_price = "Prețul trebuie să fie un număr valid";
+      } else if (price <= 0) {
+        newErrors.purchase_price = "Prețul trebuie să fie mai mare decât 0";
+      } else if (price > 10000000) {
+        newErrors.purchase_price = "Prețul nu poate fi mai mare de 10.000.000 Lei";
+      }
+    }
+
+    // Validare preț curent
+    if (!formData.current_price) {
+      newErrors.current_price = "Prețul curent este obligatoriu";
+    } else {
+      const price = parseFloat(formData.current_price);
+      if (isNaN(price)) {
+        newErrors.current_price = "Prețul trebuie să fie un număr valid";
+      } else if (price <= 0) {
+        newErrors.current_price = "Prețul trebuie să fie mai mare decât 0";
+      } else if (price > 10000000) {
+        newErrors.current_price = "Prețul nu poate fi mai mare de 10.000.000 Lei";
+      }
+    }
+
+    // Validare cantitate
+    if (!formData.quantity) {
+      newErrors.quantity = "Cantitatea este obligatorie";
+    } else {
+      const qty = parseFloat(formData.quantity);
+      if (isNaN(qty)) {
+        newErrors.quantity = "Cantitatea trebuie să fie un număr valid";
+      } else if (qty <= 0) {
+        newErrors.quantity = "Cantitatea trebuie să fie mai mare decât 0";
+      } else if (qty > 1000000) {
+        newErrors.quantity = "Cantitatea nu poate fi mai mare de 1.000.000";
+      }
+    }
+
+    // Validare dată cumpărare
+    if (!formData.purchase_date) {
+      newErrors.purchase_date = "Data de cumpărare este obligatorie";
+    } else {
+      const purchaseDate = new Date(formData.purchase_date);
+      const today = new Date();
+      const tenYearsAgo = new Date();
+      tenYearsAgo.setFullYear(today.getFullYear() - 10);
+      
+      if (purchaseDate > today) {
+        newErrors.purchase_date = "Data de cumpărare nu poate fi în viitor";
+      } else if (purchaseDate < tenYearsAgo) {
+        newErrors.purchase_date = "Data de cumpărare nu poate fi mai veche de 10 ani";
+      }
+    }
+
+    // Validare simbol (opțional, dar dacă e completat să fie valid)
+    if (formData.symbol && formData.symbol.trim().length > 10) {
+      newErrors.symbol = "Simbolul nu poate avea mai mult de 10 caractere";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleTickerSelect = (ticker: any) => {
@@ -66,22 +156,13 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
       name: ticker.name,
       symbol: ticker.symbol,
       current_price: ticker.price > 0 ? ticker.price.toString() : prev.current_price,
-      type: prev.type || "Acțiuni" // Default to stocks if not set
+      type: prev.type || "Acțiuni"
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.type || !formData.purchase_price || !formData.current_price || !formData.quantity || !formData.purchase_date) {
-      toast({
-        title: "Eroare",
-        description: "Te rog completează toate câmpurile obligatorii.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!user) {
       toast({
         title: "Eroare",
@@ -91,14 +172,24 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
       return;
     }
 
+    if (!validateForm()) {
+      toast({
+        title: "Eroare de validare",
+        description: "Te rog corectează erorile din formular",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (loading) return;
     setLoading(true);
     
     try {
       const { error } = await supabase.from('investments').insert({
         user_id: user.id,
-        name: formData.name,
+        name: formData.name.trim(),
         type: formData.type,
-        symbol: formData.symbol || null,
+        symbol: formData.symbol.trim() || null,
         purchase_price: parseFloat(formData.purchase_price),
         current_price: parseFloat(formData.current_price),
         quantity: parseFloat(formData.quantity),
@@ -112,22 +203,11 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
         description: "Investiția a fost adăugată cu succes.",
       });
 
-      // Reset form
-      setFormData({
-        name: "",
-        type: "",
-        symbol: "",
-        purchase_price: "",
-        current_price: "",
-        quantity: "",
-        purchase_date: "",
-      });
-      
-      onClose();
+      handleClose();
     } catch (error: any) {
       console.error('Error adding investment:', error);
       toast({
-        title: "Eroare",
+        title: "Eroare la adăugarea investiției",
         description: error.message || "A apărut o eroare la adăugarea investiției.",
         variant: "destructive"
       });
@@ -136,8 +216,22 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
     }
   };
 
+  const handleClose = () => {
+    setFormData({
+      name: "",
+      type: "",
+      symbol: "",
+      purchase_price: "",
+      current_price: "",
+      quantity: "",
+      purchase_date: "",
+    });
+    setErrors({});
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adaugă Investiție Nouă</DialogTitle>
@@ -160,14 +254,22 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
               placeholder="ex: Apple Inc."
+              className={errors.name ? 'border-red-500' : ''}
               required
+              disabled={loading}
+              maxLength={100}
             />
+            {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="type">Tip Investiție *</Label>
-            <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
-              <SelectTrigger>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => handleInputChange("type", value)}
+              disabled={loading}
+            >
+              <SelectTrigger className={errors.type ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Selectează tipul investiției" />
               </SelectTrigger>
               <SelectContent>
@@ -178,6 +280,7 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
                 ))}
               </SelectContent>
             </Select>
+            {errors.type && <p className="text-sm text-red-600">{errors.type}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -187,11 +290,16 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
                 id="quantity"
                 type="number"
                 step="0.01"
+                min="0.01"
+                max="1000000"
                 value={formData.quantity}
                 onChange={(e) => handleInputChange("quantity", e.target.value)}
                 placeholder="1.5"
+                className={errors.quantity ? 'border-red-500' : ''}
                 required
+                disabled={loading}
               />
+              {errors.quantity && <p className="text-sm text-red-600">{errors.quantity}</p>}
             </div>
 
             <div className="space-y-2">
@@ -201,8 +309,12 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
                 type="date"
                 value={formData.purchase_date}
                 onChange={(e) => handleInputChange("purchase_date", e.target.value)}
+                className={errors.purchase_date ? 'border-red-500' : ''}
                 required
+                disabled={loading}
+                max={new Date().toISOString().split('T')[0]}
               />
+              {errors.purchase_date && <p className="text-sm text-red-600">{errors.purchase_date}</p>}
             </div>
           </div>
 
@@ -213,11 +325,16 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
                 id="purchase_price"
                 type="number"
                 step="0.01"
+                min="0.01"
+                max="10000000"
                 value={formData.purchase_price}
                 onChange={(e) => handleInputChange("purchase_price", e.target.value)}
                 placeholder="100.50"
+                className={errors.purchase_price ? 'border-red-500' : ''}
                 required
+                disabled={loading}
               />
+              {errors.purchase_price && <p className="text-sm text-red-600">{errors.purchase_price}</p>}
             </div>
 
             <div className="space-y-2">
@@ -226,16 +343,21 @@ const AddInvestmentForm = ({ isOpen, onClose }: AddInvestmentFormProps) => {
                 id="current_price"
                 type="number"
                 step="0.01"
+                min="0.01"
+                max="10000000"
                 value={formData.current_price}
                 onChange={(e) => handleInputChange("current_price", e.target.value)}
                 placeholder="105.75"
+                className={errors.current_price ? 'border-red-500' : ''}
                 required
+                disabled={loading}
               />
+              {errors.current_price && <p className="text-sm text-red-600">{errors.current_price}</p>}
             </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Anulează
             </Button>
             <Button type="submit" disabled={loading}>
