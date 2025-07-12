@@ -23,21 +23,29 @@ export const cleanupOrphanedMembership = async (membershipId: string) => {
 
 export const enrichMemberWithProfile = async (member: any): Promise<FamilyMember> => {
   try {
-    const { data: profile } = await supabase
+    console.log('🔍 Enriching member profile for user_id:', member.user_id);
+    
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('email, first_name, last_name')
       .eq('id', member.user_id)
       .maybeSingle();
 
+    if (profileError) {
+      console.error('❌ Error loading profile for user:', member.user_id, profileError);
+    } else {
+      console.log('✅ Profile loaded for user:', member.user_id, profile);
+    }
+
     return {
       ...member,
-      email: profile?.email,
-      first_name: profile?.first_name,
-      last_name: profile?.last_name,
+      email: profile?.email || undefined,
+      first_name: profile?.first_name || undefined,
+      last_name: profile?.last_name || undefined,
       is_creator: member.role === 'admin',
     };
-  } catch (profileError) {
-    console.error('❌ Error loading profile for user:', member.user_id, profileError);
+  } catch (error) {
+    console.error('❌ Error enriching member profile:', member.user_id, error);
     return {
       ...member,
       is_creator: member.role === 'admin',
@@ -50,13 +58,17 @@ export const enrichInvitationWithDetails = async (invitation: any): Promise<Fami
     console.log('🔍 Enriching invitation:', invitation.id);
     
     // Get family name
-    const { data: family } = await supabase
+    const { data: family, error: familyError } = await supabase
       .from('family_groups')
       .select('name')
       .eq('id', invitation.family_group_id)
       .maybeSingle();
 
-    console.log('🔍 Family for invitation:', family);
+    if (familyError) {
+      console.error('❌ Error loading family for invitation:', familyError);
+    } else {
+      console.log('🔍 Family for invitation:', family);
+    }
 
     // Get inviter name with better debugging
     const { data: inviterProfile, error: inviterError } = await supabase
@@ -65,11 +77,14 @@ export const enrichInvitationWithDetails = async (invitation: any): Promise<Fami
       .eq('id', invitation.invited_by)
       .maybeSingle();
 
-    console.log('🔍 Inviter profile query:', { 
-      inviterId: invitation.invited_by, 
-      inviterProfile, 
-      inviterError 
-    });
+    if (inviterError) {
+      console.error('❌ Error loading inviter profile:', inviterError);
+    } else {
+      console.log('🔍 Inviter profile query:', { 
+        inviterId: invitation.invited_by, 
+        inviterProfile
+      });
+    }
 
     const inviterName = inviterProfile 
       ? `${inviterProfile.first_name || ''} ${inviterProfile.last_name || ''}`.trim() || inviterProfile.email || 'Administrator'

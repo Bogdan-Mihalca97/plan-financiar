@@ -69,6 +69,53 @@ export const useFamilyData = (
     }
   };
 
+  const loadFamilyMembers = async (familyGroupId: string) => {
+    console.log('🔍 Loading all family members for group:', familyGroupId);
+    
+    // Load all family members for this group
+    const { data: allMemberships, error: membersError } = await supabase
+      .from('family_memberships')
+      .select('*')
+      .eq('family_group_id', familyGroupId);
+
+    console.log('🔍 All memberships query result:', { allMemberships, membersError });
+
+    if (membersError) {
+      console.error('❌ Error loading family members:', membersError);
+      toast({
+        title: "Eroare",
+        description: "Nu s-au putut încărca membrii familiei",
+        variant: "destructive",
+      });
+      return [];
+    }
+
+    if (!allMemberships || allMemberships.length === 0) {
+      console.log('⚠️ No family members found');
+      return [];
+    }
+
+    // Get user profiles for each member
+    const memberProfiles: FamilyMember[] = [];
+    for (const member of allMemberships) {
+      try {
+        const enrichedMember = await enrichMemberWithProfile(member);
+        memberProfiles.push(enrichedMember);
+        console.log('✅ Enriched member:', enrichedMember);
+      } catch (error) {
+        console.error('❌ Error enriching member:', member.id, error);
+        // Still add the member even if profile enrichment fails
+        memberProfiles.push({
+          ...member,
+          is_creator: member.role === 'admin',
+        });
+      }
+    }
+    
+    console.log('✅ All member profiles loaded:', memberProfiles);
+    return memberProfiles;
+  };
+
   const loadFamilyData = async () => {
     if (!user || !isAuthenticated || loadingRef.current) {
       console.log('🔍 User not authenticated or already loading, skipping family data load');
@@ -141,26 +188,9 @@ export const useFamilyData = (
         setCurrentFamily(familyGroup);
         setIsCreator(membership.role === 'admin');
 
-        // Load all family members for this group
-        const { data: allMemberships, error: membersError } = await supabase
-          .from('family_memberships')
-          .select('*')
-          .eq('family_group_id', familyGroup.id);
-
-        console.log('🔍 All memberships query result:', { allMemberships, membersError });
-
-        if (membersError) {
-          console.error('❌ Error loading family members:', membersError);
-        } else if (allMemberships) {
-          // Get user profiles for each member
-          const memberProfiles: FamilyMember[] = [];
-          for (const member of allMemberships) {
-            const enrichedMember = await enrichMemberWithProfile(member);
-            memberProfiles.push(enrichedMember);
-          }
-          console.log('✅ Member profiles loaded:', memberProfiles);
-          setFamilyMembers(memberProfiles);
-        }
+        // Load all family members
+        const memberProfiles = await loadFamilyMembers(familyGroup.id);
+        setFamilyMembers(memberProfiles);
 
         // Load pending invitations if user is admin
         if (membership.role === 'admin') {
