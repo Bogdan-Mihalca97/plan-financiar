@@ -1,6 +1,18 @@
 
 import '@testing-library/jest-dom';
 
+// Extend the global object with Jest types
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeInTheDocument(): R;
+      toHaveValue(value: any): R;
+      toHaveDisplayValue(value: string | string[]): R;
+      toBeDisabled(): R;
+    }
+  }
+}
+
 // Mock pentru useToast hook
 jest.mock('@/hooks/use-toast', () => ({
   useToast: () => ({

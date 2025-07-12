@@ -18,10 +18,14 @@ const mockToast = jest.fn();
 describe('AddTransactionForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useTransactions as jest.Mock).mockReturnValue({
+    (useTransactions as jest.MockedFunction<typeof useTransactions>).mockReturnValue({
       addTransaction: mockAddTransaction,
+      transactions: [],
+      loading: false,
+      error: null,
+      refreshTransactions: jest.fn(),
     });
-    (useToast as jest.Mock).mockReturnValue({
+    (useToast as jest.MockedFunction<typeof useToast>).mockReturnValue({
       toast: mockToast,
     });
   });
