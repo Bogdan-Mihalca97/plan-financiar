@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import AddTransactionForm from '../AddTransactionForm';
 import { useTransactions } from '@/contexts/TransactionsContext';
@@ -21,12 +22,24 @@ describe('AddTransactionForm', () => {
     (useTransactions as jest.MockedFunction<typeof useTransactions>).mockReturnValue({
       addTransaction: mockAddTransaction,
       transactions: [],
+      familyTransactions: [],
+      allTransactions: [],
       loading: false,
-      error: null,
       refreshTransactions: jest.fn(),
+      updateTransaction: jest.fn(),
+      deleteTransaction: jest.fn(),
+      getTotalIncome: jest.fn(),
+      getTotalExpenses: jest.fn(),
+      getBalance: jest.fn(),
+      getMonthlyIncome: jest.fn(),
+      getMonthlyExpenses: jest.fn(),
+      getMonthlyBalance: jest.fn(),
+      getTransactionsByCategory: jest.fn(),
     });
     (useToast as jest.MockedFunction<typeof useToast>).mockReturnValue({
       toast: mockToast,
+      dismiss: jest.fn(),
+      toasts: [],
     });
   });
 
