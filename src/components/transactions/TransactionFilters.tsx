@@ -62,17 +62,17 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
     }
 
     // Type filter
-    if (newFilters.type) {
+    if (newFilters.type && newFilters.type !== 'all') {
       filtered = filtered.filter(t => t.type === newFilters.type);
     }
 
     // Category filter
-    if (newFilters.category) {
+    if (newFilters.category && newFilters.category !== 'all') {
       filtered = filtered.filter(t => t.category === newFilters.category);
     }
 
     // Date range filter
-    if (newFilters.dateRange) {
+    if (newFilters.dateRange && newFilters.dateRange !== 'all') {
       const now = new Date();
       let startDate = new Date();
       
@@ -91,13 +91,11 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
           break;
       }
 
-      if (newFilters.dateRange !== 'all') {
-        filtered = filtered.filter(t => new Date(t.date) >= startDate);
-      }
+      filtered = filtered.filter(t => new Date(t.date) >= startDate);
     }
 
     // Amount range filter
-    if (newFilters.amountRange) {
+    if (newFilters.amountRange && newFilters.amountRange !== 'all') {
       switch (newFilters.amountRange) {
         case 'small':
           filtered = filtered.filter(t => Math.abs(t.amount) < 100);
@@ -133,10 +131,36 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
   };
 
   const getActiveFiltersCount = () => {
-    return Object.values(filters).filter(value => value !== '').length;
+    return Object.values(filters).filter(value => value !== '' && value !== 'all').length;
   };
 
   const hasActiveFilters = getActiveFiltersCount() > 0;
+
+  const getDisplayValue = (filterType: string, value: string) => {
+    if (!value || value === 'all') return '';
+    
+    switch (filterType) {
+      case 'type':
+        return value === 'income' ? 'Venituri' : 'Cheltuieli';
+      case 'dateRange':
+        const dateLabels: { [key: string]: string } = {
+          'today': 'Astăzi',
+          'week': 'Ultima săptămână', 
+          'month': 'Ultima lună',
+          'year': 'Ultimul an'
+        };
+        return dateLabels[value] || value;
+      case 'amountRange':
+        const amountLabels: { [key: string]: string } = {
+          'small': 'Sub 100 Lei',
+          'medium': '100 - 1000 Lei',
+          'large': 'Peste 1000 Lei'
+        };
+        return amountLabels[value] || value;
+      default:
+        return value;
+    }
+  };
 
   return (
     <Card className="mb-6">
@@ -191,12 +215,12 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   <DollarSign className="h-4 w-4 inline mr-1" />
                   Tip
                 </label>
-                <Select value={filters.type} onValueChange={(value) => updateFilter('type', value)}>
+                <Select value={filters.type || 'all'} onValueChange={(value) => updateFilter('type', value === 'all' ? '' : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Toate tipurile" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toate tipurile</SelectItem>
+                    <SelectItem value="all">Toate tipurile</SelectItem>
                     <SelectItem value="income">Venituri</SelectItem>
                     <SelectItem value="expense">Cheltuieli</SelectItem>
                   </SelectContent>
@@ -208,12 +232,12 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   <Tag className="h-4 w-4 inline mr-1" />
                   Categorie
                 </label>
-                <Select value={filters.category} onValueChange={(value) => updateFilter('category', value)}>
+                <Select value={filters.category || 'all'} onValueChange={(value) => updateFilter('category', value === 'all' ? '' : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Toate categoriile" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toate categoriile</SelectItem>
+                    <SelectItem value="all">Toate categoriile</SelectItem>
                     {categories.map(category => (
                       <SelectItem key={category} value={category}>
                         {category}
@@ -228,12 +252,12 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   <Calendar className="h-4 w-4 inline mr-1" />
                   Perioadă
                 </label>
-                <Select value={filters.dateRange} onValueChange={(value) => updateFilter('dateRange', value)}>
+                <Select value={filters.dateRange || 'all'} onValueChange={(value) => updateFilter('dateRange', value === 'all' ? '' : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Toate perioadele" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toate perioadele</SelectItem>
+                    <SelectItem value="all">Toate perioadele</SelectItem>
                     <SelectItem value="today">Astăzi</SelectItem>
                     <SelectItem value="week">Ultima săptămână</SelectItem>
                     <SelectItem value="month">Ultima lună</SelectItem>
@@ -247,12 +271,12 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   <DollarSign className="h-4 w-4 inline mr-1" />
                   Sumă
                 </label>
-                <Select value={filters.amountRange} onValueChange={(value) => updateFilter('amountRange', value)}>
+                <Select value={filters.amountRange || 'all'} onValueChange={(value) => updateFilter('amountRange', value === 'all' ? '' : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Toate sumele" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toate sumele</SelectItem>
+                    <SelectItem value="all">Toate sumele</SelectItem>
                     <SelectItem value="small">Sub 100 Lei</SelectItem>
                     <SelectItem value="medium">100 - 1000 Lei</SelectItem>
                     <SelectItem value="large">Peste 1000 Lei</SelectItem>
@@ -277,9 +301,9 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   </button>
                 </Badge>
               )}
-              {filters.type && (
+              {filters.type && filters.type !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
-                  Tip: {filters.type === 'income' ? 'Venituri' : 'Cheltuieli'}
+                  Tip: {getDisplayValue('type', filters.type)}
                   <button
                     onClick={() => updateFilter('type', '')}
                     className="ml-1 hover:text-red-600"
@@ -288,7 +312,7 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   </button>
                 </Badge>
               )}
-              {filters.category && (
+              {filters.category && filters.category !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
                   Categorie: {filters.category}
                   <button
@@ -299,9 +323,9 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   </button>
                 </Badge>
               )}
-              {filters.dateRange && (
+              {filters.dateRange && filters.dateRange !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
-                  Perioadă: {filters.dateRange}
+                  Perioadă: {getDisplayValue('dateRange', filters.dateRange)}
                   <button
                     onClick={() => updateFilter('dateRange', '')}
                     className="ml-1 hover:text-red-600"
@@ -310,9 +334,9 @@ const TransactionFilters = ({ transactions, onFilteredTransactions }: Transactio
                   </button>
                 </Badge>
               )}
-              {filters.amountRange && (
+              {filters.amountRange && filters.amountRange !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
-                  Sumă: {filters.amountRange}
+                  Sumă: {getDisplayValue('amountRange', filters.amountRange)}
                   <button
                     onClick={() => updateFilter('amountRange', '')}
                     className="ml-1 hover:text-red-600"
