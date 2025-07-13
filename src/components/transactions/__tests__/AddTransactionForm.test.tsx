@@ -1,7 +1,5 @@
-
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { screen } from '@testing-library/dom';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddTransactionForm from '../AddTransactionForm';
 import { useTransactions } from '@/contexts/TransactionsContext';
