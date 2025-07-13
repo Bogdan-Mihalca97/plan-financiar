@@ -1,17 +1,25 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { Navigate } from 'react-router-dom';
 import Navigation from "@/components/Navigation";
 import AddTransactionButton from "@/components/transactions/AddTransactionButton";
 import TransactionsList from "@/components/transactions/TransactionsList";
+import TransactionFilters from "@/components/transactions/TransactionFilters";
 import { useAuth } from "@/contexts/AuthContext";
+import { Transaction } from "@/types/transaction";
 
 const Transactions = () => {
   const { allTransactions, familyTransactions, loading, refreshTransactions } = useTransactions();
   const { currentFamily } = useFamily();
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+
+  // Update filtered transactions when allTransactions changes
+  useEffect(() => {
+    setFilteredTransactions(allTransactions);
+  }, [allTransactions]);
 
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
@@ -39,6 +47,10 @@ const Transactions = () => {
     );
   }
 
+  const handleFilteredTransactions = (filtered: Transaction[]) => {
+    setFilteredTransactions(filtered);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -48,7 +60,7 @@ const Transactions = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Tranzacții</h1>
             <p className="text-gray-600 mt-1">
-              {allTransactions.length} tranzacții în total
+              {filteredTransactions.length} din {allTransactions.length} tranzacții
               {currentFamily && familyTransactions.length > 0 && (
                 <span className="ml-2 text-blue-600">
                   ({familyTransactions.length} tranzacții de familie)
@@ -70,9 +82,14 @@ const Transactions = () => {
           </div>
         )}
 
+        <TransactionFilters 
+          transactions={allTransactions}
+          onFilteredTransactions={handleFilteredTransactions}
+        />
+
         <div className="space-y-6">
           <TransactionsList 
-            transactions={allTransactions} 
+            transactions={filteredTransactions} 
             onTransactionUpdated={refreshTransactions}
             onTransactionDeleted={refreshTransactions}
           />
