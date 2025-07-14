@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -80,32 +79,8 @@ export const InvestmentsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  // Set up real-time subscription
   useEffect(() => {
-    if (!user || !isAuthenticated) return;
-
     fetchInvestments();
-
-    // Subscribe to real-time changes for investments
-    const channel = supabase
-      .channel('investments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'investments'
-        },
-        () => {
-          console.log('Investment change detected, refreshing data');
-          fetchInvestments();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [user, isAuthenticated, currentFamily]);
 
   const allInvestments = [...investments, ...familyInvestments];
