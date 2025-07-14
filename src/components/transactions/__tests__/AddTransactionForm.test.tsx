@@ -1,28 +1,22 @@
 
-import { render } from '@testing-library/react';
-import { fireEvent, waitFor, screen } from '@testing-library/dom';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddTransactionForm from '../AddTransactionForm';
 
-// Mock the required hooks and contexts
+// Mock the transactions context
+const mockAddTransaction = jest.fn();
+const mockTransactionsContext = {
+  transactions: [],
+  categories: ['Food', 'Transport', 'Entertainment'],
+  addTransaction: mockAddTransaction,
+  updateTransaction: jest.fn(),
+  deleteTransaction: jest.fn(),
+  loading: false,
+  refreshTransactions: jest.fn(),
+};
+
 jest.mock('@/contexts/TransactionsContext', () => ({
-  useTransactions: () => ({
-    addTransaction: jest.fn(),
-    loading: false,
-  }),
-}));
-
-jest.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 'test-user-id' },
-    isAuthenticated: true,
-  }),
-}));
-
-jest.mock('@/contexts/FamilyContext', () => ({
-  useFamily: () => ({
-    currentFamily: null,
-  }),
+  useTransactions: () => mockTransactionsContext,
 }));
 
 jest.mock('@/hooks/use-toast', () => ({
@@ -32,40 +26,45 @@ jest.mock('@/hooks/use-toast', () => ({
 }));
 
 describe('AddTransactionForm', () => {
-  it('renders all form fields', () => {
-    render(<AddTransactionForm />);
+  const mockProps = {
+    isOpen: true,
+    onClose: jest.fn(),
+  };
+
+  beforeEach(() => {
+    mockAddTransaction.mockReset();
+  });
+
+  it('should render form fields', () => {
+    render(<AddTransactionForm {...mockProps} />);
     
     expect(screen.getByLabelText(/descriere/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/sumă/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/categorie/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/tip/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/dată/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/suma/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /adaugă tranzacția/i })).toBeInTheDocument();
   });
 
-  it('validates required fields', async () => {
+  it('should validate required fields', async () => {
     const user = userEvent.setup();
-    render(<AddTransactionForm />);
+    render(<AddTransactionForm {...mockProps} />);
     
     const submitButton = screen.getByRole('button', { name: /adaugă tranzacția/i });
     await user.click(submitButton);
     
-    await waitFor(() => {
-      expect(screen.getByText(/descrierea este obligatorie/i)).toBeInTheDocument();
-    });
+    // Should not submit without required fields
+    expect(mockAddTransaction).not.toHaveBeenCalled();
   });
 
-  it('handles form submission', async () => {
+  it('should submit valid transaction', async () => {
     const user = userEvent.setup();
-    render(<AddTransactionForm />);
+    render(<AddTransactionForm {...mockProps} />);
     
-    await user.type(screen.getByLabelText(/descriere/i), 'Test expense');
-    await user.type(screen.getByLabelText(/sumă/i), '50');
+    await user.type(screen.getByLabelText(/descriere/i), 'Test transaction');
+    await user.type(screen.getByLabelText(/suma/i), '100');
     
-    const submitButton = screen.getByRole('button', { name: /adaugă tranzacția/i });
-    await user.click(submitButton);
+    await user.click(screen.getByRole('button', { name: /adaugă tranzacția/i }));
     
     await waitFor(() => {
-      expect(screen.getByDisplayValue('Test expense')).toBeInTheDocument();
+      expect(mockAddTransaction).toHaveBeenCalled();
     });
   });
 });

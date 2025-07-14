@@ -2,7 +2,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InviteMemberForm from '../InviteMemberForm';
-import { FamilyProvider } from '@/contexts/FamilyContext';
 
 // Mock the family context
 const mockInviteMember = jest.fn();
