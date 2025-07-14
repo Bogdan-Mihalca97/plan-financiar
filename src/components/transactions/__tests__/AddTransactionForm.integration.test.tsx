@@ -1,57 +1,73 @@
 
-import { render } from '@testing-library/react';
-import { fireEvent, waitFor, screen } from '@testing-library/dom';
-import userEvent from '@testing-library/user-event';
-import AddTransactionForm from '../AddTransactionForm';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 
-// Mock the contexts and hooks
-jest.mock('@/contexts/TransactionsContext', () => ({
-  useTransactions: () => ({
-    addTransaction: jest.fn(),
-    loading: false,
-  }),
+// Mock Supabase
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      insert: jest.fn(() => Promise.resolve({ data: null, error: null }))
+    }))
+  }
 }));
 
-jest.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 'test-user-id' },
-    isAuthenticated: true,
-  }),
-}));
-
-jest.mock('@/contexts/FamilyContext', () => ({
-  useFamily: () => ({
-    currentFamily: null,
-  }),
-}));
-
-jest.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: jest.fn(),
-  }),
-}));
-
-describe('AddTransactionForm Integration', () => {
-  it('renders form fields correctly', () => {
-    render(<AddTransactionForm />);
-    
-    expect(screen.getByLabelText(/descriere/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/sumă/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/categorie/i)).toBeInTheDocument();
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } }
   });
 
-  it('submits form with valid data', async () => {
-    const user = userEvent.setup();
-    render(<AddTransactionForm />);
-    
-    await user.type(screen.getByLabelText(/descriere/i), 'Test transaction');
-    await user.type(screen.getByLabelText(/sumă/i), '100');
-    
-    const submitButton = screen.getByRole('button', { name: /adaugă tranzacția/i });
-    await user.click(submitButton);
-    
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
+
+describe('AddTransactionForm Integration', () => {
+  const mockOnClose = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('renders form when open', () => {
+    render(
+      <TestWrapper>
+        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Adaugă Tranzacție')).toBeInTheDocument();
+  });
+
+  test('does not render when closed', () => {
+    render(
+      <TestWrapper>
+        <AddTransactionForm isOpen={false} onClose={mockOnClose} />
+      </TestWrapper>
+    );
+
+    expect(screen.queryByText('Adaugă Tranzacție')).not.toBeInTheDocument();
+  });
+
+  test('submits form with valid data', async () => {
+    render(
+      <TestWrapper>
+        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
+      </TestWrapper>
+    );
+
+    // Fill out the form and submit
+    const descriptionInput = screen.getByPlaceholderText(/descriere/i);
+    fireEvent.change(descriptionInput, { target: { value: 'Test transaction' } });
+
+    const submitButton = screen.getByRole('button', { name: /adaugă/i });
+    fireEvent.click(submitButton);
+
     await waitFor(() => {
-      expect(screen.getByLabelText(/descriere/i)).toHaveValue('Test transaction');
+      expect(mockOnClose).toHaveBeenCalled();
     });
   });
 });

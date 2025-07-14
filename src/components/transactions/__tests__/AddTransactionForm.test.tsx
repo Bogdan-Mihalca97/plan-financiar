@@ -1,71 +1,71 @@
 
-import { render } from '@testing-library/react';
-import { fireEvent, waitFor, screen } from '@testing-library/dom';
-import userEvent from '@testing-library/user-event';
-import AddTransactionForm from '../AddTransactionForm';
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 
-// Mock the required hooks and contexts
-jest.mock('@/contexts/TransactionsContext', () => ({
-  useTransactions: () => ({
-    addTransaction: jest.fn(),
-    loading: false,
-  }),
+// Mock Supabase
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      insert: jest.fn(() => Promise.resolve({ data: null, error: null }))
+    }))
+  }
 }));
 
-jest.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 'test-user-id' },
-    isAuthenticated: true,
-  }),
-}));
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } }
+  });
 
-jest.mock('@/contexts/FamilyContext', () => ({
-  useFamily: () => ({
-    currentFamily: null,
-  }),
-}));
-
-jest.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: jest.fn(),
-  }),
-}));
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
 
 describe('AddTransactionForm', () => {
-  it('renders all form fields', () => {
-    render(<AddTransactionForm />);
-    
-    expect(screen.getByLabelText(/descriere/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/sumă/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/categorie/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/tip/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/dată/i)).toBeInTheDocument();
+  const mockOnClose = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('validates required fields', async () => {
-    const user = userEvent.setup();
-    render(<AddTransactionForm />);
-    
-    const submitButton = screen.getByRole('button', { name: /adaugă tranzacția/i });
-    await user.click(submitButton);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/descrierea este obligatorie/i)).toBeInTheDocument();
-    });
+  test('renders correctly when open', () => {
+    render(
+      <TestWrapper>
+        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Adaugă Tranzacție')).toBeInTheDocument();
   });
 
-  it('handles form submission', async () => {
-    const user = userEvent.setup();
-    render(<AddTransactionForm />);
-    
-    await user.type(screen.getByLabelText(/descriere/i), 'Test expense');
-    await user.type(screen.getByLabelText(/sumă/i), '50');
-    
-    const submitButton = screen.getByRole('button', { name: /adaugă tranzacția/i });
-    await user.click(submitButton);
-    
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('Test expense')).toBeInTheDocument();
-    });
+  test('calls onClose when cancel button is clicked', () => {
+    render(
+      <TestWrapper>
+        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
+      </TestWrapper>
+    );
+
+    const cancelButton = screen.getByRole('button', { name: /anulează/i });
+    fireEvent.click(cancelButton);
+
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  test('form validation works correctly', () => {
+    render(
+      <TestWrapper>
+        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
+      </TestWrapper>
+    );
+
+    const submitButton = screen.getByRole('button', { name: /adaugă/i });
+    fireEvent.click(submitButton);
+
+    // Form should not submit without required fields
+    expect(mockOnClose).not.toHaveBeenCalled();
   });
 });

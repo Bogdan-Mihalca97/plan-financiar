@@ -41,53 +41,35 @@ export const TransactionsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       console.log('Fetching transactions for user:', user.id);
       
-      if (currentFamily) {
-        // If user is part of a family, fetch all transactions for the family (includes personal ones)
-        console.log('Fetching family transactions for family:', currentFamily.id);
-        
-        const { data: allFamilyTransactions, error: familyError } = await supabase
-          .from('transactions')
-          .select('*')
-          .or(`user_id.eq.${user.id},family_group_id.eq.${currentFamily.id}`)
-          .order('date', { ascending: false });
+      // Fetch all transactions the user can see (own + family members' + family-level)
+      const { data: allUserTransactions, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
 
-        if (familyError) {
-          console.error('Error fetching family transactions:', familyError);
-          throw familyError;
-        }
-
-        console.log('Fetched all transactions:', allFamilyTransactions);
-        
-        // Separate personal and family transactions
-        const userPersonalTransactions = (allFamilyTransactions || []).filter(
-          t => t.user_id === user.id && !t.family_group_id
-        );
-        const familySharedTransactions = (allFamilyTransactions || []).filter(
-          t => t.family_group_id === currentFamily.id
-        );
-
-        setTransactions(userPersonalTransactions as Transaction[]);
-        setFamilyTransactions(familySharedTransactions as Transaction[]);
-      } else {
-        // If user is not part of a family, fetch only personal transactions
-        console.log('No family found, fetching only personal transactions');
-        
-        const { data: personalTransactions, error: personalError } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .is('family_group_id', null)
-          .order('date', { ascending: false });
-
-        if (personalError) {
-          console.error('Error fetching personal transactions:', personalError);
-          throw personalError;
-        }
-
-        console.log('Fetched personal transactions:', personalTransactions);
-        setTransactions((personalTransactions || []) as Transaction[]);
-        setFamilyTransactions([]);
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        throw error;
       }
+
+      console.log('Fetched all visible transactions:', allUserTransactions);
+      
+      // Separate personal, family members', and family-level transactions
+      const userPersonalTransactions = (allUserTransactions || []).filter(
+        t => t.user_id === user.id && !t.family_group_id
+      );
+      
+      const familyMemberTransactions = (allUserTransactions || []).filter(
+        t => t.user_id !== user.id && !t.family_group_id
+      );
+      
+      const familyLevelTransactions = (allUserTransactions || []).filter(
+        t => t.family_group_id
+      );
+
+      // Combine personal and family member transactions
+      setTransactions([...userPersonalTransactions, ...familyMemberTransactions] as Transaction[]);
+      setFamilyTransactions(familyLevelTransactions as Transaction[]);
 
     } catch (error: any) {
       console.error('Error in fetchTransactions:', error);

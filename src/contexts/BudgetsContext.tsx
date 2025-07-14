@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,41 +44,30 @@ export const BudgetsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log('Fetching budgets for user:', user.id);
       
-      // Fetch personal budgets
-      const { data: personalBudgets, error: personalError } = await supabase
+      // Fetch all budgets the user can see (own + family members' + family-level)
+      const { data: allUserBudgets, error } = await supabase
         .from('budgets')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (personalError) {
-        console.error('Error fetching personal budgets:', personalError);
-        throw personalError;
+      if (error) {
+        console.error('Error fetching budgets:', error);
+        throw error;
       }
 
-      console.log('Fetched personal budgets:', personalBudgets);
-      setBudgets((personalBudgets || []) as Budget[]);
+      console.log('Fetched all visible budgets:', allUserBudgets);
+      
+      // Separate personal/family member budgets and family-level budgets
+      const personalAndMemberBudgets = (allUserBudgets || []).filter(
+        b => !b.family_group_id
+      );
+      
+      const familyLevelBudgets = (allUserBudgets || []).filter(
+        b => b.family_group_id
+      );
 
-      // Fetch family budgets if user is part of a family
-      if (currentFamily) {
-        console.log('Fetching family budgets for family:', currentFamily.id);
-        
-        const { data: familyBuds, error: familyError } = await supabase
-          .from('budgets')
-          .select('*')
-          .eq('family_group_id', currentFamily.id)
-          .order('created_at', { ascending: false });
-
-        if (familyError) {
-          console.error('Error fetching family budgets:', familyError);
-        } else {
-          console.log('Fetched family budgets:', familyBuds);
-          setFamilyBudgets((familyBuds || []) as Budget[]);
-        }
-      } else {
-        console.log('No family found, skipping family budgets');
-        setFamilyBudgets([]);
-      }
+      setBudgets(personalAndMemberBudgets as Budget[]);
+      setFamilyBudgets(familyLevelBudgets as Budget[]);
 
     } catch (error: any) {
       console.error('Error in fetchBudgets:', error);

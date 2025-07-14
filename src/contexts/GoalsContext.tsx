@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,41 +49,30 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       console.log('Fetching goals for user:', user.id);
       
-      // Fetch personal goals
-      const { data: personalGoals, error: personalError } = await supabase
+      // Fetch all goals the user can see (own + family members' + family-level)
+      const { data: allUserGoals, error } = await supabase
         .from('goals')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (personalError) {
-        console.error('Error fetching personal goals:', personalError);
-        throw personalError;
+      if (error) {
+        console.error('Error fetching goals:', error);
+        throw error;
       }
 
-      console.log('Fetched personal goals:', personalGoals);
-      setGoals((personalGoals || []) as Goal[]);
+      console.log('Fetched all visible goals:', allUserGoals);
+      
+      // Separate personal/family member goals and family-level goals
+      const personalAndMemberGoals = (allUserGoals || []).filter(
+        g => !g.family_group_id
+      );
+      
+      const familyLevelGoals = (allUserGoals || []).filter(
+        g => g.family_group_id
+      );
 
-      // Fetch family goals if user is part of a family
-      if (currentFamily) {
-        console.log('Fetching family goals for family:', currentFamily.id);
-        
-        const { data: familyGls, error: familyError } = await supabase
-          .from('goals')
-          .select('*')
-          .eq('family_group_id', currentFamily.id)
-          .order('created_at', { ascending: false });
-
-        if (familyError) {
-          console.error('Error fetching family goals:', familyError);
-        } else {
-          console.log('Fetched family goals:', familyGls);
-          setFamilyGoals((familyGls || []) as Goal[]);
-        }
-      } else {
-        console.log('No family found, skipping family goals');
-        setFamilyGoals([]);
-      }
+      setGoals(personalAndMemberGoals as Goal[]);
+      setFamilyGoals(familyLevelGoals as Goal[]);
 
     } catch (error: any) {
       console.error('Error in fetchGoals:', error);

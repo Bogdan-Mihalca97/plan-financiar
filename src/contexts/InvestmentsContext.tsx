@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,41 +47,30 @@ export const InvestmentsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       console.log('Fetching investments for user:', user.id);
       
-      // Fetch personal investments
-      const { data: personalInvestments, error: personalError } = await supabase
+      // Fetch all investments the user can see (own + family members' + family-level)
+      const { data: allUserInvestments, error } = await supabase
         .from('investments')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (personalError) {
-        console.error('Error fetching personal investments:', personalError);
-        throw personalError;
+      if (error) {
+        console.error('Error fetching investments:', error);
+        throw error;
       }
 
-      console.log('Fetched personal investments:', personalInvestments);
-      setInvestments((personalInvestments || []) as Investment[]);
+      console.log('Fetched all visible investments:', allUserInvestments);
+      
+      // Separate personal/family member investments and family-level investments
+      const personalAndMemberInvestments = (allUserInvestments || []).filter(
+        i => !i.family_group_id
+      );
+      
+      const familyLevelInvestments = (allUserInvestments || []).filter(
+        i => i.family_group_id
+      );
 
-      // Fetch family investments if user is part of a family
-      if (currentFamily) {
-        console.log('Fetching family investments for family:', currentFamily.id);
-        
-        const { data: familyInvs, error: familyError } = await supabase
-          .from('investments')
-          .select('*')
-          .eq('family_group_id', currentFamily.id)
-          .order('created_at', { ascending: false });
-
-        if (familyError) {
-          console.error('Error fetching family investments:', familyError);
-        } else {
-          console.log('Fetched family investments:', familyInvs);
-          setFamilyInvestments((familyInvs || []) as Investment[]);
-        }
-      } else {
-        console.log('No family found, skipping family investments');
-        setFamilyInvestments([]);
-      }
+      setInvestments(personalAndMemberInvestments as Investment[]);
+      setFamilyInvestments(familyLevelInvestments as Investment[]);
 
     } catch (error: any) {
       console.error('Error in fetchInvestments:', error);
