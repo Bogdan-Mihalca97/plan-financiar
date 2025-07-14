@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -81,8 +82,32 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Set up real-time subscription
   useEffect(() => {
+    if (!user || !isAuthenticated) return;
+
     fetchGoals();
+
+    // Subscribe to real-time changes for goals
+    const channel = supabase
+      .channel('goals-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'goals'
+        },
+        () => {
+          console.log('Goal change detected, refreshing data');
+          fetchGoals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, isAuthenticated, currentFamily]);
 
   const allGoals = [...goals, ...familyGoals];

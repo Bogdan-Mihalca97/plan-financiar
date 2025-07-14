@@ -1,73 +1,138 @@
-
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AddTransactionForm from '@/components/transactions/AddTransactionForm';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import AddTransactionForm from '../AddTransactionForm';
+import { TransactionsProvider } from '@/contexts/TransactionsContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { FamilyProvider } from '@/contexts/FamilyContext';
 
-// Mock Supabase
-jest.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      insert: jest.fn(() => Promise.resolve({ data: null, error: null }))
-    }))
-  }
-}));
+// Mock the useAuth hook
+vi.mock('@/contexts/AuthContext', () => {
+  const mockAuthContext = {
+    isAuthenticated: true,
+    user: { id: 'test-user-id', email: 'test@example.com' },
+    userProfile: { first_name: 'Test', last_name: 'User' },
+    loading: false,
+  };
+  return {
+    useAuth: () => mockAuthContext,
+    AuthProvider: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+  };
+});
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } }
-  });
+// Mock the useFamily hook
+vi.mock('@/contexts/FamilyContext', () => {
+  const mockFamilyContext = {
+    currentFamily: null,
+    familyMembers: [],
+    familyInvitations: [],
+    pendingInvitations: [],
+    isCreator: false,
+    createFamily: vi.fn(),
+    inviteMember: vi.fn(),
+    acceptInvitation: vi.fn(),
+    declineInvitation: vi.fn(),
+    removeMember: vi.fn(),
+    leaveFamily: vi.fn(),
+    loading: false,
+    refreshFamily: vi.fn(),
+  };
+  return {
+    useFamily: () => mockFamilyContext,
+    FamilyProvider: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+  };
+});
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
-};
+// Mock the useTransactions hook
+vi.mock('@/contexts/TransactionsContext', () => {
+  const mockTransactionsContext = {
+    transactions: [],
+    familyTransactions: [],
+    allTransactions: [],
+    loading: false,
+    refreshTransactions: vi.fn(),
+    addTransaction: vi.fn(),
+    updateTransaction: vi.fn(),
+    deleteTransaction: vi.fn(),
+    getTotalIncome: vi.fn(),
+    getTotalExpenses: vi.fn(),
+    getBalance: vi.fn(),
+    getMonthlyIncome: vi.fn(),
+    getMonthlyExpenses: vi.fn(),
+    getMonthlyBalance: vi.fn(),
+    getTransactionsByCategory: vi.fn(),
+  };
+  return {
+    useTransactions: () => mockTransactionsContext,
+    TransactionsProvider: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+  };
+});
 
 describe('AddTransactionForm Integration', () => {
-  const mockOnClose = jest.fn();
+  it('should render the form and submit a transaction', async () => {
+    const addTransactionMock = vi.fn();
+    vi.mock('@/contexts/TransactionsContext', () => ({
+      useTransactions: () => ({
+        transactions: [],
+        familyTransactions: [],
+        allTransactions: [],
+        loading: false,
+        refreshTransactions: vi.fn(),
+        addTransaction: addTransactionMock,
+        updateTransaction: vi.fn(),
+        deleteTransaction: vi.fn(),
+        getTotalIncome: vi.fn(),
+        getTotalExpenses: vi.fn(),
+        getBalance: vi.fn(),
+        getMonthlyIncome: vi.fn(),
+        getMonthlyExpenses: vi.fn(),
+        getMonthlyBalance: vi.fn(),
+        getTransactionsByCategory: vi.fn(),
+      }),
+      TransactionsProvider: ({ children }: { children: React.ReactNode }) => (
+        <>{children}</>
+      ),
+    }));
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('renders form when open', () => {
     render(
-      <TestWrapper>
-        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
-      </TestWrapper>
+      <AuthProvider>
+        <FamilyProvider>
+          <TransactionsProvider>
+            <AddTransactionForm />
+          </TransactionsProvider>
+        </FamilyProvider>
+      </AuthProvider>
     );
 
-    expect(screen.getByText('Adaugă Tranzacție')).toBeInTheDocument();
-  });
+    // Fill in the form
+    fireEvent.change(screen.getByLabelText('Descriere'), { target: { value: 'Test Transaction' } });
+    fireEvent.change(screen.getByLabelText('Sumă'), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText('Dată'), { target: { value: '2024-01-01' } });
+    fireEvent.change(screen.getByLabelText('Categorie'), { target: { value: 'Food' } });
 
-  test('does not render when closed', () => {
-    render(
-      <TestWrapper>
-        <AddTransactionForm isOpen={false} onClose={mockOnClose} />
-      </TestWrapper>
-    );
+    // Select the type
+    fireEvent.click(screen.getByText('Cheltuială'));
 
-    expect(screen.queryByText('Adaugă Tranzacție')).not.toBeInTheDocument();
-  });
+    // Submit the form
+    fireEvent.click(screen.getByText('Adaugă Tranzacție'));
 
-  test('submits form with valid data', async () => {
-    render(
-      <TestWrapper>
-        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
-      </TestWrapper>
-    );
-
-    // Fill out the form and submit
-    const descriptionInput = screen.getByPlaceholderText(/descriere/i);
-    fireEvent.change(descriptionInput, { target: { value: 'Test transaction' } });
-
-    const submitButton = screen.getByRole('button', { name: /adaugă/i });
-    fireEvent.click(submitButton);
-
+    // Wait for the transaction to be added
     await waitFor(() => {
-      expect(mockOnClose).toHaveBeenCalled();
+      expect(addTransactionMock).toHaveBeenCalled();
     });
+
+    expect(addTransactionMock).toHaveBeenCalledWith(expect.objectContaining({
+      description: 'Test Transaction',
+      amount: 100,
+      date: '2024-01-01',
+      category: 'Food',
+      type: 'expense',
+    }));
   });
 });
