@@ -20,13 +20,13 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 describe('AddTransactionForm', () => {
-  test('renders form correctly', () => {
+  test('renders form elements', () => {
     render(
       <TestWrapper>
-        <AddTransactionForm isOpen={true} onClose={jest.fn()} />
+        <AddTransactionForm />
       </TestWrapper>
     );
 
-    expect(screen.getByText(/adaugă tranzacție/i)).toBeInTheDocument();
+    expect(screen.getByText('Adaugă Tranzacție')).toBeInTheDocument();
   });
 });

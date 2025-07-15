@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 
@@ -21,15 +20,15 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 describe('AddTransactionForm Integration', () => {
-  test('renders form correctly', async () => {
+  test('renders without crashing', async () => {
     render(
       <TestWrapper>
-        <AddTransactionForm isOpen={true} onClose={jest.fn()} />
+        <AddTransactionForm />
       </TestWrapper>
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/adaugă tranzacție/i)).toBeInTheDocument();
+      expect(screen.getByText('Adaugă Tranzacție')).toBeInTheDocument();
     });
   });
 });
