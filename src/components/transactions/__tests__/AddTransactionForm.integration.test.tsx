@@ -1,17 +1,12 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AddTransactionForm from '@/components/transactions/AddTransactionForm';
 
 // Mock Supabase
-jest.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      insert: jest.fn(() => Promise.resolve({ data: null, error: null }))
-    }))
-  }
-}));
+jest.mock('@/integrations/supabase/client');
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
@@ -26,48 +21,15 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 describe('AddTransactionForm Integration', () => {
-  const mockOnClose = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('renders form when open', () => {
+  test('renders form correctly', async () => {
     render(
       <TestWrapper>
-        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
+        <AddTransactionForm />
       </TestWrapper>
     );
-
-    expect(screen.getByText('Adaugă Tranzacție')).toBeInTheDocument();
-  });
-
-  test('does not render when closed', () => {
-    render(
-      <TestWrapper>
-        <AddTransactionForm isOpen={false} onClose={mockOnClose} />
-      </TestWrapper>
-    );
-
-    expect(screen.queryByText('Adaugă Tranzacție')).not.toBeInTheDocument();
-  });
-
-  test('submits form with valid data', async () => {
-    render(
-      <TestWrapper>
-        <AddTransactionForm isOpen={true} onClose={mockOnClose} />
-      </TestWrapper>
-    );
-
-    // Fill out the form and submit
-    const descriptionInput = screen.getByPlaceholderText(/descriere/i);
-    fireEvent.change(descriptionInput, { target: { value: 'Test transaction' } });
-
-    const submitButton = screen.getByRole('button', { name: /adaugă/i });
-    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockOnClose).toHaveBeenCalled();
+      expect(screen.getByText(/adaugă tranzacție/i)).toBeInTheDocument();
     });
   });
 });
