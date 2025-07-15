@@ -24,7 +24,7 @@ describe('AddTransactionForm Integration', () => {
   test('renders form correctly', async () => {
     render(
       <TestWrapper>
-        <AddTransactionForm />
+        <AddTransactionForm isOpen={true} onClose={jest.fn()} />
       </TestWrapper>
     );
 
